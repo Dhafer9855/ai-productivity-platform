@@ -1,7 +1,7 @@
-
 import Header from "@/components/Header";
 import ModuleCard from "@/components/ModuleCard";
 import StatsCard from "@/components/StatsCard";
+import PaymentButton from "@/components/PaymentButton";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Clock, Target, Trophy, BookOpen, Users } from "lucide-react";
 
@@ -160,9 +160,12 @@ const Index = () => {
             </div>
           </div>
           
-          <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium">
-            Continue Learning
-          </Button>
+          <div className="flex justify-center space-x-4">
+            <PaymentButton />
+            <Button variant="outline" className="px-8 py-3 text-lg font-medium">
+              Learn More
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}
