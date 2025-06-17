@@ -147,10 +147,10 @@ const Index = () => {
           
           <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
             <p className="text-green-800 font-semibold text-lg">
-              🎉 Limited Time: Free Access Available!
+              🚀 Transform Your Career with AI!
             </p>
             <p className="text-green-700 text-sm mt-1">
-              Get full access to all 7 modules while we improve the content. Sign up now!
+              Learn how AI can 10x your productivity and make you indispensable in today's workplace. Join thousands of professionals already using AI to work smarter, not harder.
             </p>
           </div>
           
