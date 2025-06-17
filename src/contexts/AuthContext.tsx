@@ -29,36 +29,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const supabaseConfigured = true; // Always true since we're using the integrated client
+  const [supabaseConfigured, setSupabaseConfigured] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
+    // Check if Supabase is properly configured by testing a simple operation
+    const checkSupabaseConfig = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Try to get the session - this will fail if Supabase isn't configured
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error && error.message.includes('Invalid API key')) {
+          setSupabaseConfigured(false);
+        } else {
+          setSupabaseConfigured(true);
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
       } catch (error) {
-        console.error('Error getting session:', error);
+        console.error('Supabase configuration error:', error);
+        setSupabaseConfigured(false);
       } finally {
         setLoading(false);
       }
     };
 
-    getSession();
+    checkSupabaseConfig();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    // Only set up auth listener if Supabase is configured
+    if (supabaseConfigured) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
 
-    return () => subscription.unsubscribe();
-  }, []);
+      return () => subscription.unsubscribe();
+    }
+  }, [supabaseConfigured]);
 
   const signOut = async () => {
     try {
