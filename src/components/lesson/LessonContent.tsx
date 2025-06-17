@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { Play, Download, ExternalLink, Lightbulb, Target, CheckCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { Play, Download, ExternalLink, Lightbulb, Target, CheckCircle, TrendingUp, Clock, Users } from "lucide-react";
 
 interface LessonContentProps {
   lesson: {
@@ -22,6 +22,27 @@ interface LessonContentProps {
 }
 
 const LessonContent = ({ lesson }: LessonContentProps) => {
+  // Modern productivity transformation data
+  const productivityJourney = [
+    { week: "Week 1", traditional: 100, withAI: 105, tasks: 12 },
+    { week: "Week 2", traditional: 100, withAI: 125, tasks: 15 },
+    { week: "Week 3", traditional: 100, withAI: 150, tasks: 18 },
+    { week: "Week 4", traditional: 100, withAI: 180, tasks: 22 },
+    { week: "Week 5", traditional: 100, withAI: 220, tasks: 26 },
+    { week: "Week 6", traditional: 100, withAI: 250, tasks: 30 },
+    { week: "Week 7", traditional: 100, withAI: 280, tasks: 34 },
+    { week: "Week 8", traditional: 100, withAI: 320, tasks: 38 },
+  ];
+
+  // AI impact by task category
+  const aiImpactData = [
+    { category: "Email Management", impact: 85, color: "#3b82f6" },
+    { category: "Content Creation", impact: 75, color: "#8b5cf6" },
+    { category: "Data Analysis", impact: 90, color: "#06b6d4" },
+    { category: "Scheduling", impact: 80, color: "#10b981" },
+    { category: "Research", impact: 70, color: "#f59e0b" },
+  ];
+
   // Sample data for charts
   const productivityData = [
     { task: "Email Management", before: 2.5, after: 0.5 },
@@ -78,26 +99,103 @@ const LessonContent = ({ lesson }: LessonContentProps) => {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-semibold mb-4">Productivity Impact Analysis</h3>
+                <h3 className="text-xl font-semibold mb-4">The AI Productivity Transformation Journey</h3>
                 <Card className="mb-6">
                   <CardHeader>
-                    <CardTitle>Time Saved Per Task (Hours/Week)</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-blue-500" />
+                      Productivity Growth: Traditional vs AI-Enhanced
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">Track how AI adoption transforms your work output over time</p>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={{ before: { label: "Before AI", color: "#ef4444" }, after: { label: "With AI", color: "#22c55e" } }}>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={productivityData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="task" />
-                          <YAxis />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="before" fill="#ef4444" name="Before AI" />
-                          <Bar dataKey="after" fill="#22c55e" name="With AI" />
-                        </BarChart>
+                    <ChartContainer config={{ 
+                      traditional: { label: "Traditional Methods", color: "#ef4444" }, 
+                      withAI: { label: "With AI Tools", color: "#22c55e" } 
+                    }}>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <AreaChart data={productivityJourney}>
+                          <defs>
+                            <linearGradient id="traditionalGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                            </linearGradient>
+                            <linearGradient id="aiGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="week" stroke="#666" />
+                          <YAxis stroke="#666" />
+                          <ChartTooltip 
+                            content={<ChartTooltipContent />}
+                            labelFormatter={(value) => `${value}`}
+                            formatter={(value, name) => [
+                              `${value}% efficiency`,
+                              name === 'traditional' ? 'Traditional Methods' : 'AI-Enhanced'
+                            ]}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="traditional"
+                            stroke="#ef4444"
+                            strokeWidth={2}
+                            fill="url(#traditionalGradient)"
+                            name="traditional"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="withAI"
+                            stroke="#22c55e"
+                            strokeWidth={3}
+                            fill="url(#aiGradient)"
+                            name="withAI"
+                          />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </ChartContainer>
                   </CardContent>
                 </Card>
+
+                {/* Modern stats cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-blue-600 text-sm font-medium">Time Saved Weekly</p>
+                          <p className="text-2xl font-bold text-blue-900">15+ hrs</p>
+                        </div>
+                        <Clock className="h-8 w-8 text-blue-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-600 text-sm font-medium">Productivity Increase</p>
+                          <p className="text-2xl font-bold text-green-900">220%</p>
+                        </div>
+                        <TrendingUp className="h-8 w-8 text-green-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-purple-600 text-sm font-medium">Tasks Automated</p>
+                          <p className="text-2xl font-bold text-purple-900">38</p>
+                        </div>
+                        <Users className="h-8 w-8 text-purple-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
                 <h3 className="text-xl font-semibold mb-4">AI Categories for Productivity</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
