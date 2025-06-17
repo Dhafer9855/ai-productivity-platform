@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,14 +83,23 @@ const LessonView = () => {
     }
   };
 
-  // Find the next lesson
+  // Find the next and previous lessons
   const currentLessonOrder = lesson?.order;
   const nextLesson = moduleLessons?.find(l => l.order === (currentLessonOrder || 0) + 1);
+  const previousLesson = moduleLessons?.find(l => l.order === (currentLessonOrder || 0) - 1);
+  
   const isLastLesson = !nextLesson;
+  const isFirstLesson = !previousLesson;
 
   const handleNextLesson = () => {
     if (nextLesson) {
       navigate(`/lesson/${moduleId}/${nextLesson.id}`);
+    }
+  };
+
+  const handlePreviousLesson = () => {
+    if (previousLesson) {
+      navigate(`/lesson/${moduleId}/${previousLesson.id}`);
     }
   };
 
@@ -184,10 +192,21 @@ const LessonView = () => {
           {/* Lesson Content */}
           <LessonContent lesson={lessonWithDescription} />
 
-          {/* Completion Actions */}
+          {/* Navigation between lessons */}
           <Card className="mt-8">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
+                <div className="flex space-x-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={handlePreviousLesson}
+                    disabled={isFirstLesson}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    {isFirstLesson ? "First Lesson" : "Previous Lesson"}
+                  </Button>
+                </div>
+                
                 <div>
                   <h3 className="font-semibold mb-2">Ready to continue?</h3>
                   <p className="text-gray-600 text-sm">
