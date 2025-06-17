@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Clock, CheckCircle, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, CheckCircle } from "lucide-react";
 import LessonContent from "@/components/lesson/LessonContent";
 import { useState } from "react";
 
@@ -30,6 +30,22 @@ const LessonView = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch all lessons in the current module to determine next lesson
+  const { data: moduleLessons } = useQuery({
+    queryKey: ['module-lessons', moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('module_id', parseInt(moduleId!))
+        .order('order', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!moduleId,
   });
 
   const { data: progress } = useQuery({
@@ -65,6 +81,17 @@ const LessonView = () => {
 
     if (!error) {
       setIsCompleted(true);
+    }
+  };
+
+  // Find the next lesson
+  const currentLessonOrder = lesson?.order;
+  const nextLesson = moduleLessons?.find(l => l.order === (currentLessonOrder || 0) + 1);
+  const isLastLesson = !nextLesson;
+
+  const handleNextLesson = () => {
+    if (nextLesson) {
+      navigate(`/lesson/${moduleId}/${nextLesson.id}`);
     }
   };
 
@@ -176,9 +203,13 @@ const LessonView = () => {
                     </Button>
                   )}
                   
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleNextLesson}
+                    disabled={isLastLesson}
+                  >
                     <ArrowRight className="h-4 w-4 mr-2" />
-                    Next Lesson
+                    {isLastLesson ? "Course Complete" : "Next Lesson"}
                   </Button>
                 </div>
               </div>
