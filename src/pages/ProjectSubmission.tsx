@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { Upload, Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Header from "@/components/Header";
+import { useNavigate } from "react-router-dom";
 
 const ProjectSubmission = () => {
   const [projectTitle, setProjectTitle] = useState("");
@@ -19,6 +21,7 @@ const ProjectSubmission = () => {
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +35,31 @@ const ProjectSubmission = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to submit a project",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate submission (in a real app, this would send to your backend)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const { error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          title: projectTitle,
+          description: projectDescription,
+          submission_url: githubUrl || liveUrl,
+          status: 'submitted',
+          submitted_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Project Submitted Successfully!",
         description: "Thank you for submitting your final project. Our team will review it soon.",
@@ -49,10 +71,16 @@ const ProjectSubmission = () => {
       setGithubUrl("");
       setLiveUrl("");
       setAdditionalNotes("");
-    } catch (error) {
+
+      // Navigate to dashboard after successful submission
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
+    } catch (error: any) {
+      console.error('Project submission error:', error);
       toast({
         title: "Submission Failed",
-        description: "There was an error submitting your project. Please try again.",
+        description: error.message || "There was an error submitting your project. Please try again.",
         variant: "destructive",
       });
     } finally {

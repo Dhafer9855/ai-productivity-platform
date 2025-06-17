@@ -1,0 +1,77 @@
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Trophy, BookOpen, Clock, Target } from "lucide-react";
+import { useCourseData } from "@/hooks/useCourseData";
+import { useUserProgress } from "@/hooks/useUserProgress";
+
+const DashboardStats = () => {
+  const { modules, lessons } = useCourseData();
+  const { progress } = useUserProgress();
+
+  const totalLessons = lessons?.length || 0;
+  const completedLessons = progress?.filter(p => p.completed).length || 0;
+  const completedModules = modules?.filter(module => {
+    const moduleLessons = lessons?.filter(lesson => lesson.module_id === module.id) || [];
+    const moduleCompletedLessons = moduleLessons.filter(lesson => 
+      progress?.some(p => p.lesson_id === lesson.id && p.completed)
+    );
+    return moduleLessons.length > 0 && moduleCompletedLessons.length === moduleLessons.length;
+  }).length || 0;
+
+  const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
+  const stats = [
+    {
+      title: "Overall Progress",
+      value: `${Math.round(overallProgress)}%`,
+      description: `${completedLessons} of ${totalLessons} lessons completed`,
+      icon: Target,
+      progress: overallProgress,
+    },
+    {
+      title: "Modules Completed",
+      value: completedModules,
+      description: `${completedModules} of ${modules?.length || 0} modules`,
+      icon: BookOpen,
+      progress: modules?.length ? (completedModules / modules.length) * 100 : 0,
+    },
+    {
+      title: "Learning Streak",
+      value: "7 days",
+      description: "Keep up the great work!",
+      icon: Trophy,
+      progress: 100,
+    },
+    {
+      title: "Time Invested",
+      value: `${completedLessons * 15}min`,
+      description: "Estimated learning time",
+      icon: Clock,
+      progress: Math.min((completedLessons * 15) / 300 * 100, 100),
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {stats.map((stat, index) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={index}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
+              <Progress value={stat.progress} className="h-2" />
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+};
+
+export default DashboardStats;

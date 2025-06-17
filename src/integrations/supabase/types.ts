@@ -64,29 +64,113 @@ export type Database = {
       }
       projects: {
         Row: {
+          description: string | null
+          feedback: string | null
           id: number
           module_id: number | null
+          status: string | null
           submission_url: string | null
           submitted_at: string | null
+          title: string | null
           user_id: string | null
         }
         Insert: {
+          description?: string | null
+          feedback?: string | null
           id?: number
           module_id?: number | null
+          status?: string | null
           submission_url?: string | null
           submitted_at?: string | null
+          title?: string | null
           user_id?: string | null
         }
         Update: {
+          description?: string | null
+          feedback?: string | null
           id?: number
           module_id?: number | null
+          status?: string | null
           submission_url?: string | null
           submitted_at?: string | null
+          title?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "projects_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          lesson_id: number | null
+          module_id: number
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lesson_id?: number | null
+          module_id: number
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lesson_id?: number | null
+          module_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_progress_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
