@@ -43,6 +43,7 @@ const CourseContent = () => {
       title: module.title || `Module ${module.id}`,
       description: module.description,
       lessons: moduleLessons.map(lesson => ({
+        id: lesson.id,
         title: lesson.title,
         type: "video" as const,
         duration: "15 min",

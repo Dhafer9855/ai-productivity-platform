@@ -24,7 +24,7 @@ const LessonView = () => {
       const { data, error } = await supabase
         .from('lessons')
         .select('*, modules(*)')
-        .eq('id', lessonId)
+        .eq('id', parseInt(lessonId!))
         .single();
 
       if (error) throw error;
@@ -41,7 +41,7 @@ const LessonView = () => {
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
-        .eq('lesson_id', lessonId)
+        .eq('lesson_id', parseInt(lessonId!))
         .maybeSingle();
 
       if (error) throw error;
@@ -94,6 +94,12 @@ const LessonView = () => {
 
   const isLessonCompleted = progress?.completed || isCompleted;
 
+  // Create lesson object with required description property
+  const lessonWithDescription = {
+    ...lesson,
+    description: lesson.modules.description || "Learn about AI productivity techniques and tools."
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
@@ -137,7 +143,7 @@ const LessonView = () => {
                     )}
                   </div>
                   <CardTitle className="text-2xl">{lesson.title}</CardTitle>
-                  <p className="text-gray-600">{lesson.description}</p>
+                  <p className="text-gray-600">{lessonWithDescription.description}</p>
                 </div>
                 
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -149,7 +155,7 @@ const LessonView = () => {
           </Card>
 
           {/* Lesson Content */}
-          <LessonContent lesson={lesson} />
+          <LessonContent lesson={lessonWithDescription} />
 
           {/* Completion Actions */}
           <Card className="mt-8">
