@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Clock, BookOpen } from "lucide-react";
 import ProgressBar from "./ProgressBar";
 import LessonItem from "./LessonItem";
+import { useNavigate } from "react-router-dom";
 
 interface Lesson {
+  id: number;
   title: string;
   type: "video" | "text" | "quiz";
   duration?: string;
@@ -31,12 +33,26 @@ const ModuleCard = ({
   estimatedTime,
   isLocked = false 
 }: ModuleCardProps) => {
+  const navigate = useNavigate();
   const completedLessons = lessons.filter(lesson => lesson.completed).length;
+  
+  const handleCardClick = () => {
+    if (!isLocked && lessons.length > 0) {
+      // Navigate to the first lesson of this module
+      navigate(`/lesson/${moduleNumber}/${lessons[0].id}`);
+    }
+  };
+
+  const handleLessonClick = (lessonId: number) => {
+    if (!isLocked) {
+      navigate(`/lesson/${moduleNumber}/${lessonId}`);
+    }
+  };
   
   return (
     <Card className={`p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
       isLocked ? "opacity-60" : "cursor-pointer"
-    }`}>
+    }`} onClick={handleCardClick}>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -94,14 +110,18 @@ const ModuleCard = ({
           <div className="space-y-2 pt-2 border-t border-gray-100">
             <h4 className="text-sm font-medium text-gray-900">Lessons:</h4>
             <div className="space-y-1 max-h-32 overflow-y-auto">
-              {lessons.slice(0, 3).map((lesson, index) => (
-                <LessonItem
-                  key={index}
-                  title={lesson.title}
-                  type={lesson.type}
-                  duration={lesson.duration}
-                  completed={lesson.completed}
-                />
+              {lessons.slice(0, 3).map((lesson) => (
+                <div key={lesson.id} onClick={(e) => {
+                  e.stopPropagation();
+                  handleLessonClick(lesson.id);
+                }}>
+                  <LessonItem
+                    title={lesson.title}
+                    type={lesson.type}
+                    duration={lesson.duration}
+                    completed={lesson.completed}
+                  />
+                </div>
               ))}
               {lessons.length > 3 && (
                 <p className="text-xs text-gray-500 px-3 py-1">
