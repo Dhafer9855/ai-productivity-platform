@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
 import { CreditCard, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthModal from "./auth/AuthModal";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -12,32 +14,23 @@ const supabase = createClient(
 
 const PaymentButton = () => {
   const [loading, setLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, session } = useAuth();
 
   const handlePayment = async () => {
+    // Check if user is authenticated
+    if (!user || !session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to purchase the course.",
+        variant: "destructive",
+      });
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to purchase the course.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Get the session token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Session Error",
-          description: "Please log in again.",
-          variant: "destructive",
-        });
-        return;
-      }
 
       // Call the edge function to create payment session
       const { data, error } = await supabase.functions.invoke('create-payment', {
@@ -52,7 +45,8 @@ const PaymentButton = () => {
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Payment error:', error);
       toast({
         title: "Payment Error",
         description: error.message || "Failed to initialize payment",
@@ -64,23 +58,31 @@ const PaymentButton = () => {
   };
 
   return (
-    <Button 
-      onClick={handlePayment}
-      disabled={loading}
-      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 text-lg font-medium"
-    >
-      {loading ? (
-        <>
-          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-          Processing...
-        </>
-      ) : (
-        <>
-          <CreditCard className="h-5 w-5 mr-2" />
-          Purchase Course - $49.99
-        </>
-      )}
-    </Button>
+    <>
+      <Button 
+        onClick={handlePayment}
+        disabled={loading}
+        className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 text-lg font-medium"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <CreditCard className="h-5 w-5 mr-2" />
+            Purchase Course - $49.99
+          </>
+        )}
+      </Button>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode="signin"
+      />
+    </>
   );
 };
 
