@@ -141,9 +141,18 @@ const Index = () => {
               AI for Workplace Productivity
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
             Master the tools, techniques, and transformations that will accelerate your career in the AI-powered workplace.
           </p>
+          
+          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
+            <p className="text-green-800 font-semibold text-lg">
+              🎉 Limited Time: Free Access Available!
+            </p>
+            <p className="text-green-700 text-sm mt-1">
+              Get full access to all 7 modules while we improve the content. Sign up now!
+            </p>
+          </div>
           
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
