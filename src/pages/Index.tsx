@@ -1,239 +1,282 @@
+
 import Header from "@/components/Header";
-import ModuleCard from "@/components/ModuleCard";
-import StatsCard from "@/components/StatsCard";
 import PaymentButton from "@/components/PaymentButton";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Clock, Target, Trophy, BookOpen, Users } from "lucide-react";
+import { GraduationCap, Clock, Target, Trophy, BookOpen, Users, CheckCircle, Play, Star } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import AuthModal from "@/components/auth/AuthModal";
 
 const Index = () => {
-  const modules = [
-    {
-      moduleNumber: 1,
-      title: "Introduction to AI & Productivity",
-      description: "Understand what AI is and how it impacts work. Learn the fundamentals of AI technology and its role in modern workplace efficiency.",
-      lessons: [
-        { title: "What is AI? (with animation explainer)", type: "video" as const, duration: "12 min", completed: true },
-        { title: "How AI boosts workplace efficiency", type: "text" as const, duration: "8 min", completed: true },
-        { title: "AI vs Automation vs Machine Learning", type: "video" as const, duration: "15 min", completed: false },
-      ],
-      progress: 67,
-      estimatedTime: "45 min"
-    },
-    {
-      moduleNumber: 2,
-      title: "AI Tools for Everyday Tasks",
-      description: "Explore tools that automate daily work routines. Discover ChatGPT, Grammarly, email assistants, and scheduling AI.",
-      lessons: [
-        { title: "AI Writing Assistants (ChatGPT, Grammarly, Jasper)", type: "video" as const, duration: "18 min", completed: false },
-        { title: "AI Email & Meeting Helpers", type: "text" as const, duration: "12 min", completed: false },
-        { title: "AI Scheduling & Planning", type: "video" as const, duration: "14 min", completed: false },
-      ],
-      progress: 0,
-      estimatedTime: "55 min"
-    },
-    {
-      moduleNumber: 3,
-      title: "AI in Project Management & Communication",
-      description: "Improve team collaboration and task tracking with smart project management tools and real-time AI collaboration.",
-      lessons: [
-        { title: "Smart Task Managers (ClickUp, Asana AI, Notion AI)", type: "video" as const, duration: "20 min", completed: false },
-        { title: "Real-time Collaboration", type: "text" as const, duration: "15 min", completed: false },
-        { title: "AI Meeting Notes & Actions", type: "video" as const, duration: "16 min", completed: false },
-      ],
-      progress: 0,
-      estimatedTime: "1h 5min",
-      isLocked: true
-    },
-    {
-      moduleNumber: 4,
-      title: "AI for Document & Data Handling",
-      description: "Use AI to summarize, extract, and analyze data. Master document processing and AI-powered dashboards.",
-      lessons: [
-        { title: "Summarization & Auto-generation", type: "video" as const, duration: "22 min", completed: false },
-        { title: "Data Extraction & Cleanup", type: "text" as const, duration: "18 min", completed: false },
-        { title: "AI Dashboards", type: "video" as const, duration: "25 min", completed: false },
-      ],
-      progress: 0,
-      estimatedTime: "1h 15min",
-      isLocked: true
-    },
-    {
-      moduleNumber: 5,
-      title: "Building AI Workflows",
-      description: "Integrate multiple tools into efficient workflows using no-code AI tools, app connections, and productivity templates.",
-      lessons: [
-        { title: "No-code AI Tools (Zapier, n8n, Make)", type: "video" as const, duration: "28 min", completed: false },
-        { title: "Connecting Apps using AI agents", type: "text" as const, duration: "20 min", completed: false },
-        { title: "Productivity Templates & Recipes", type: "video" as const, duration: "15 min", completed: false },
-      ],
-      progress: 0,
-      estimatedTime: "1h 10min",
-      isLocked: true
-    },
-    {
-      moduleNumber: 6,
-      title: "AI Ethics, Privacy, and Job Impact",
-      description: "Understand limitations, risks, and job evolution. Learn responsible AI use and develop team policies.",
-      lessons: [
-        { title: "Responsible AI Use at Work", type: "text" as const, duration: "12 min", completed: false },
-        { title: "AI & Job Roles: What's Changing?", type: "video" as const, duration: "18 min", completed: false },
-        { title: "AI Policy for Teams", type: "text" as const, duration: "10 min", completed: false },
-      ],
-      progress: 0,
-      estimatedTime: "50 min",
-      isLocked: true
-    },
-    {
-      moduleNumber: 7,
-      title: "Case Studies & Final Project",
-      description: "Apply knowledge to your real work scenario through case studies and build your own AI productivity plan.",
-      lessons: [
-        { title: "Real Business Use Cases", type: "video" as const, duration: "25 min", completed: false },
-        { title: "Build Your Own AI Productivity Plan", type: "text" as const, duration: "30 min", completed: false },
-        { title: "Final Project Presentation", type: "quiz" as const, duration: "45 min", completed: false },
-      ],
-      progress: 0,
-      estimatedTime: "1h 40min",
-      isLocked: true
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setShowAuthModal(true);
     }
+  };
+
+  const features = [
+    {
+      title: "7 Comprehensive Modules",
+      description: "From AI basics to advanced workflow automation",
+      icon: BookOpen,
+    },
+    {
+      title: "Hands-on Projects",
+      description: "Real-world applications you can implement immediately",
+      icon: Target,
+    },
+    {
+      title: "Expert Guidance",
+      description: "Learn from industry professionals with proven results",
+      icon: Users,
+    },
+    {
+      title: "Certificates",
+      description: "Professional completion certificates for your achievements",
+      icon: Trophy,
+    },
   ];
 
-  const stats = [
+  const testimonials = [
     {
-      title: "Course Progress",
-      value: "15%",
-      description: "2 of 7 modules completed",
-      icon: GraduationCap,
-      gradient: "bg-gradient-to-r from-blue-500 to-blue-600"
+      name: "Sarah Chen",
+      role: "Product Manager",
+      company: "TechCorp",
+      content: "This course completely transformed how I approach daily tasks. I'm now 3x more productive!",
+      rating: 5,
     },
     {
-      title: "Time Invested",
-      value: "2.5h",
-      description: "Out of 8 hours total",
-      icon: Clock,
-      gradient: "bg-gradient-to-r from-purple-500 to-purple-600"
+      name: "Michael Rodriguez",
+      role: "Marketing Director", 
+      company: "GrowthCo",
+      content: "The AI tools I learned here save me 10+ hours per week. Best investment I've made.",
+      rating: 5,
     },
     {
-      title: "Skills Unlocked",
-      value: "8",
-      description: "AI productivity techniques",
-      icon: Target,
-      gradient: "bg-gradient-to-r from-green-500 to-green-600"
+      name: "Emma Thompson",
+      role: "Operations Lead",
+      company: "StartupXYZ",
+      content: "From automation to smart scheduling, this course covers everything you need to know.",
+      rating: 5,
+    },
+  ];
+
+  const curriculum = [
+    {
+      module: 1,
+      title: "Introduction to AI & Productivity",
+      lessons: 3,
+      duration: "45 min",
+      description: "Understanding AI fundamentals and workplace applications"
     },
     {
-      title: "Achievements",
-      value: "3",
-      description: "Certificates earned",
-      icon: Trophy,
-      gradient: "bg-gradient-to-r from-orange-500 to-orange-600"
-    }
+      module: 2,
+      title: "AI Tools for Everyday Tasks",
+      lessons: 3,
+      duration: "55 min",
+      description: "ChatGPT, Grammarly, email assistants, and scheduling AI"
+    },
+    {
+      module: 3,
+      title: "AI in Project Management",
+      lessons: 3,
+      duration: "65 min",
+      description: "Smart task managers and real-time collaboration tools"
+    },
+    {
+      module: 4,
+      title: "Document & Data Handling",
+      lessons: 3,
+      duration: "75 min",
+      description: "AI summarization, data extraction, and dashboard creation"
+    },
+    {
+      module: 5,
+      title: "Building AI Workflows",
+      lessons: 3,
+      duration: "70 min",
+      description: "No-code automation with Zapier, n8n, and Make"
+    },
+    {
+      module: 6,
+      title: "AI Ethics & Privacy",
+      lessons: 3,
+      duration: "50 min",
+      description: "Responsible AI use and team policy development"
+    },
+    {
+      module: 7,
+      title: "Case Studies & Projects",
+      lessons: 3,
+      duration: "100 min",
+      description: "Real business applications and final project"
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main>
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              AI for Workplace Productivity
-            </h1>
-          </div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-            Master the tools, techniques, and transformations that will accelerate your career in the AI-powered workplace.
-          </p>
-          
-          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
-            <p className="text-green-800 font-semibold text-lg">
-              🚀 Transform Your Career with AI!
+        <section className="max-w-7xl mx-auto px-6 py-16">
+          <div className="text-center mb-12">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                Master AI for Workplace Productivity
+              </h1>
+            </div>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              Transform your career with the tools, techniques, and strategies that will make you indispensable in the AI-powered workplace. Join thousands of professionals already using AI to work smarter, not harder.
             </p>
-            <p className="text-green-700 text-sm mt-1">
-              Learn how AI can 10x your productivity and make you indispensable in today's workplace. Join thousands of professionals already using AI to work smarter, not harder.
+            
+            <div className="bg-green-100 border border-green-300 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
+              <p className="text-green-800 font-semibold text-lg mb-2">
+                🚀 Limited Time: Early Access Pricing
+              </p>
+              <p className="text-green-700">
+                Get lifetime access to all modules, updates, and future content. Start your AI transformation today!
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
+              <div className="flex items-center space-x-2 bg-white px-6 py-3 rounded-full shadow-sm">
+                <BookOpen className="h-5 w-5 text-blue-500" />
+                <span className="font-medium">7 Comprehensive Modules</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white px-6 py-3 rounded-full shadow-sm">
+                <Clock className="h-5 w-5 text-purple-500" />
+                <span className="font-medium">8+ Hours of Content</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white px-6 py-3 rounded-full shadow-sm">
+                <Users className="h-5 w-5 text-green-500" />
+                <span className="font-medium">Beginner Friendly</span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button 
+                size="lg" 
+                className="px-8 py-4 text-lg font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                onClick={handleGetStarted}
+              >
+                <Play className="h-5 w-5 mr-2" />
+                {user ? 'Continue Learning' : 'Start Learning Now'}
+              </Button>
+              <PaymentButton />
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="bg-white py-16">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Why Choose Our AI Productivity Course?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="text-center p-6">
+                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-xl w-fit mx-auto mb-4">
+                      <Icon className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                    <p className="text-gray-600 text-sm">{feature.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Curriculum Preview */}
+        <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Complete Curriculum
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {curriculum.map((item) => (
+                <div key={item.module} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="text-sm text-blue-600 font-medium mb-1">Module {item.module}</div>
+                      <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                    </div>
+                    <div className="text-right text-sm text-gray-500">
+                      <div>{item.lessons} lessons</div>
+                      <div>{item.duration}</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="bg-white py-16">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              What Our Students Say
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="bg-gray-50 rounded-xl p-6">
+                  <div className="flex mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 mb-4 italic">"{testimonial.content}"</p>
+                  <div>
+                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                    <div className="text-sm text-gray-600">{testimonial.role} at {testimonial.company}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to Transform Your Productivity?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8">
+              Join thousands of professionals who have already mastered AI for workplace efficiency.
             </p>
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
-              <BookOpen className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">7 Comprehensive Modules</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
-              <Clock className="h-4 w-4 text-purple-500" />
-              <span className="text-sm font-medium">8+ Hours of Content</span>
-            </div>
-            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
-              <Users className="h-4 w-4 text-green-500" />
-              <span className="text-sm font-medium">Beginner Friendly</span>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button 
+                size="lg" 
+                variant="secondary"
+                className="px-8 py-4 text-lg font-medium"
+                onClick={handleGetStarted}
+              >
+                {user ? 'Go to Dashboard' : 'Get Started Now'}
+              </Button>
+              <PaymentButton />
             </div>
           </div>
-          
-          <div className="flex justify-center space-x-4">
-            <PaymentButton />
-            <Button variant="outline" className="px-8 py-3 text-lg font-medium">
-              Learn More
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {stats.map((stat, index) => (
-            <StatsCard key={index} {...stat} />
-          ))}
-        </div>
-
-        {/* Modules Grid */}
-        <div className="space-y-8">
-          <h2 className="text-3xl font-bold text-gray-900">Course Modules</h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {modules.map((module, index) => (
-              <ModuleCard key={index} {...module} />
-            ))}
-          </div>
-        </div>
-
-        {/* Course Add-ons Section */}
-        <div className="mt-16 bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Course Add-ons & Resources</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center p-4">
-              <div className="bg-blue-100 p-3 rounded-lg w-fit mx-auto mb-3">
-                <BookOpen className="h-6 w-6 text-blue-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Templates</h4>
-              <p className="text-sm text-gray-600">Downloadable workflow and prompt guides</p>
-            </div>
-            
-            <div className="text-center p-4">
-              <div className="bg-purple-100 p-3 rounded-lg w-fit mx-auto mb-3">
-                <Target className="h-6 w-6 text-purple-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">AI Tools Directory</h4>
-              <p className="text-sm text-gray-600">Comprehensive list of productivity tools</p>
-            </div>
-            
-            <div className="text-center p-4">
-              <div className="bg-green-100 p-3 rounded-lg w-fit mx-auto mb-3">
-                <Trophy className="h-6 w-6 text-green-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Certificate</h4>
-              <p className="text-sm text-gray-600">Professional completion certificate</p>
-            </div>
-            
-            <div className="text-center p-4">
-              <div className="bg-orange-100 p-3 rounded-lg w-fit mx-auto mb-3">
-                <Users className="h-6 w-6 text-orange-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Community</h4>
-              <p className="text-sm text-gray-600">Discussion boards & peer review</p>
-            </div>
-          </div>
-        </div>
+        </section>
       </main>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 };
