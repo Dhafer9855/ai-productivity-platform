@@ -4,10 +4,13 @@ import { Progress } from "@/components/ui/progress";
 import { Trophy, BookOpen, Clock, Target } from "lucide-react";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
+import { useGrades } from "@/hooks/useGrades";
+import GradeDisplay from "./GradeDisplay";
 
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
   const { progress } = useUserProgress();
+  const { userProfile } = useGrades();
 
   const totalLessons = lessons?.length || 0;
   const completedLessons = progress?.filter(p => p.completed).length || 0;
@@ -37,11 +40,11 @@ const DashboardStats = () => {
       progress: modules?.length ? (completedModules / modules.length) * 100 : 0,
     },
     {
-      title: "Learning Streak",
-      value: "7 days",
-      description: "Keep up the great work!",
+      title: "Current Grade",
+      value: userProfile?.overall_grade ? `${userProfile.overall_grade.toFixed(1)}%` : "N/A",
+      description: userProfile?.certificate_earned ? "Certificate Earned!" : "Keep learning!",
       icon: Trophy,
-      progress: 100,
+      progress: userProfile?.overall_grade || 0,
     },
     {
       title: "Time Invested",
@@ -53,7 +56,7 @@ const DashboardStats = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
@@ -70,6 +73,8 @@ const DashboardStats = () => {
           </Card>
         );
       })}
+      
+      <GradeDisplay />
     </div>
   );
 };
