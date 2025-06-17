@@ -2,19 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AlertCircle } from "lucide-react";
 import GoogleSignUpButton from "./GoogleSignUpButton";
 import FormDivider from "./FormDivider";
 import EmailSignUpForm from "./EmailSignUpForm";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -29,8 +21,6 @@ const SignUpForm = ({ onSuccess, onSwitchToSignIn }: SignUpFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  const supabaseConfigured = !!(supabaseUrl && supabaseAnonKey && supabase);
 
   const validateForm = () => {
     if (!email || !password || !confirmPassword || !fullName) {
@@ -76,15 +66,6 @@ const SignUpForm = ({ onSuccess, onSwitchToSignIn }: SignUpFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!supabaseConfigured || !supabase) {
-      toast({
-        title: "Configuration Error",
-        description: "Supabase is not configured. Please set up your environment variables.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     if (!validateForm()) return;
 
     setLoading(true);
@@ -120,15 +101,6 @@ const SignUpForm = ({ onSuccess, onSwitchToSignIn }: SignUpFormProps) => {
   };
 
   const handleGoogleSignUp = async () => {
-    if (!supabaseConfigured || !supabase) {
-      toast({
-        title: "Configuration Error",
-        description: "Supabase is not configured. Please set up your environment variables.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setGoogleLoading(true);
 
     try {
@@ -151,22 +123,6 @@ const SignUpForm = ({ onSuccess, onSwitchToSignIn }: SignUpFormProps) => {
       setGoogleLoading(false);
     }
   };
-
-  if (!supabaseConfigured) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="flex items-center text-amber-600">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            Configuration Required
-          </CardTitle>
-          <CardDescription>
-            Supabase environment variables are not configured. Please set up VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-md">
