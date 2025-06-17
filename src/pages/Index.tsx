@@ -1,4 +1,3 @@
-
 import Header from "@/components/Header";
 import PaymentButton from "@/components/PaymentButton";
 import { Button } from "@/components/ui/button";
@@ -139,10 +138,10 @@ const Index = () => {
             
             <div className="bg-green-100 border border-green-300 rounded-xl p-6 mb-8 max-w-2xl mx-auto">
               <p className="text-green-800 font-semibold text-lg mb-2">
-                🚀 Limited Time: Early Access Pricing
+                ⚡ Stop Working Harder, Start Working Smarter
               </p>
               <p className="text-green-700">
-                Get lifetime access to all modules, updates, and future content. Start your AI transformation today!
+                While your colleagues struggle with manual tasks, you'll be automating workflows and boosting productivity with AI. Get ahead of the curve now!
               </p>
             </div>
             
