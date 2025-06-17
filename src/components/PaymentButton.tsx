@@ -3,21 +3,33 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "./auth/AuthModal";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 const PaymentButton = () => {
   const [loading, setLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, session } = useAuth();
+  const { user, session, supabaseConfigured } = useAuth();
 
   const handlePayment = async () => {
+    // Check if Supabase is configured
+    if (!supabaseConfigured || !supabase) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase is not configured. Please set up your environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if user is authenticated
     if (!user || !session) {
       toast({
@@ -56,6 +68,20 @@ const PaymentButton = () => {
       setLoading(false);
     }
   };
+
+  // Show configuration error if Supabase is not set up
+  if (!supabaseConfigured) {
+    return (
+      <Button 
+        disabled
+        variant="destructive"
+        className="px-8 py-3 text-lg font-medium"
+      >
+        <AlertCircle className="h-5 w-5 mr-2" />
+        Configuration Required
+      </Button>
+    );
+  }
 
   return (
     <>

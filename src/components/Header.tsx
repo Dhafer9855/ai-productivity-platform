@@ -1,5 +1,5 @@
 
-import { Brain, User, Settings, LogOut, LogIn } from "lucide-react";
+import { Brain, User, Settings, LogOut, LogIn, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
@@ -14,7 +14,7 @@ import AuthModal from "./auth/AuthModal";
 import { toast } from "@/hooks/use-toast";
 
 const Header = () => {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading, supabaseConfigured } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -31,6 +31,18 @@ const Header = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleSignInClick = () => {
+    if (!supabaseConfigured) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase is not configured. Please set up your environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowAuthModal(true);
   };
 
   const getUserDisplayName = () => {
@@ -59,6 +71,13 @@ const Header = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {!supabaseConfigured && (
+                <div className="flex items-center text-amber-600 text-sm">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <span>Setup Required</span>
+                </div>
+              )}
+              
               {loading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               ) : user ? (
@@ -89,7 +108,8 @@ const Header = () => {
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={handleSignInClick}
+                  disabled={!supabaseConfigured}
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   Sign In
