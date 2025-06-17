@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const CourseContent = () => {
   const { user } = useAuth();
-  const { modules, getLessonsByModule, isLoading } = useCourseData();
+  const { modules, lessons, isLoading } = useCourseData();
   const { progress, markLessonComplete } = useUserProgress();
 
   if (isLoading) {
@@ -34,6 +34,10 @@ const CourseContent = () => {
       </div>
     );
   }
+
+  const getLessonsByModule = (moduleId: number) => {
+    return lessons?.filter(lesson => lesson.module_id === moduleId) || [];
+  };
 
   const isLessonCompleted = (lessonId: number) => {
     return progress?.some(p => p.lesson_id === lessonId && p.completed) || false;
