@@ -22,7 +22,10 @@ export const useUserProgress = () => {
         `)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user progress:', error);
+        throw error;
+      }
       return data;
     },
     enabled: !!user,
@@ -40,9 +43,14 @@ export const useUserProgress = () => {
           module_id: moduleId,
           completed: true,
           completed_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,lesson_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating progress:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userProgress'] });

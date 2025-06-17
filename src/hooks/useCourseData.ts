@@ -29,14 +29,9 @@ export const useCourseData = () => {
     },
   });
 
-  const getLessonsByModule = (moduleId: number) => {
-    return lessons?.filter(lesson => lesson.module_id === moduleId) || [];
-  };
-
   return {
     modules,
     lessons,
-    getLessonsByModule,
     isLoading: modulesLoading || lessonsLoading,
   };
 };
