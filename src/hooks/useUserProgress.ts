@@ -35,21 +35,45 @@ export const useUserProgress = () => {
     mutationFn: async ({ lessonId, moduleId }: { lessonId: number; moduleId: number }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { error } = await supabase
+      // First, try to get existing progress for this module
+      const { data: existingProgress } = await supabase
         .from('user_progress')
-        .upsert({
-          user_id: user.id,
-          lesson_id: lessonId,
-          module_id: moduleId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,lesson_id'
-        });
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('module_id', moduleId)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error updating progress:', error);
-        throw error;
+      if (existingProgress) {
+        // Update existing progress to mark this lesson as complete
+        const { error } = await supabase
+          .from('user_progress')
+          .update({
+            lesson_id: lessonId,
+            completed: true,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', existingProgress.id);
+
+        if (error) {
+          console.error('Error updating progress:', error);
+          throw error;
+        }
+      } else {
+        // Create new progress record
+        const { error } = await supabase
+          .from('user_progress')
+          .insert({
+            user_id: user.id,
+            lesson_id: lessonId,
+            module_id: moduleId,
+            completed: true,
+            completed_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error creating progress:', error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {

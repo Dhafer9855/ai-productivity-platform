@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,19 +107,40 @@ const LessonView = () => {
     mutationFn: async () => {
       if (!user?.id || !lessonId) throw new Error('Missing user or lesson ID');
 
-      const { error } = await supabase
+      // First, try to get existing progress for this module
+      const { data: existingProgress } = await supabase
         .from('user_progress')
-        .upsert({
-          user_id: user.id,
-          lesson_id: parseInt(lessonId),
-          module_id: parseInt(moduleId!),
-          completed: true,
-          completed_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,lesson_id'
-        });
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('module_id', parseInt(moduleId!))
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existingProgress) {
+        // Update existing progress to mark this lesson as complete
+        const { error } = await supabase
+          .from('user_progress')
+          .update({
+            lesson_id: parseInt(lessonId),
+            completed: true,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', existingProgress.id);
+
+        if (error) throw error;
+      } else {
+        // Create new progress record
+        const { error } = await supabase
+          .from('user_progress')
+          .insert({
+            user_id: user.id,
+            lesson_id: parseInt(lessonId),
+            module_id: parseInt(moduleId!),
+            completed: true,
+            completed_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       setIsCompleted(true);
