@@ -4,6 +4,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Header from "@/components/Header";
 import DashboardStats from "@/components/DashboardStats";
 import CourseContent from "@/components/CourseContent";
+import ProjectStatus from "@/components/ProjectStatus";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -28,6 +29,11 @@ const Dashboard = () => {
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Course Progress</h2>
             <CourseContent />
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Final Project</h2>
+            <ProjectStatus />
           </div>
         </main>
       </div>

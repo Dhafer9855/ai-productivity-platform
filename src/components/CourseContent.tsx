@@ -1,7 +1,9 @@
+
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useAssignments } from "@/hooks/useAssignments";
 import { useTests } from "@/hooks/useTests";
+import { useCourseAccess } from "@/hooks/useCourseAccess";
 import ModuleCard from "./ModuleCard";
 import AssignmentCard from "./AssignmentCard";
 import TestCard from "./TestCard";
@@ -13,6 +15,7 @@ const CourseContent = () => {
   const { progress } = useUserProgress();
   const { assignments, submissions } = useAssignments();
   const { tests, attempts } = useTests();
+  const { hasAccessToModule } = useCourseAccess();
 
   if (!modules || !lessons) {
     return <div>Loading course content...</div>;
@@ -51,6 +54,9 @@ const CourseContent = () => {
       currentCompletedLesson: moduleProgressRecord?.lesson_id
     });
 
+    // Check if user has access to this module
+    const hasAccess = hasAccessToModule(module.id);
+
     // For module 7, show assignment instead of lessons
     if (module.id === 7) {
       return {
@@ -61,6 +67,7 @@ const CourseContent = () => {
         progress: progressPercentage,
         estimatedTime: "Assignment",
         isAssignment: true,
+        isLocked: !hasAccess,
       };
     }
 
@@ -77,6 +84,7 @@ const CourseContent = () => {
       })),
       progress: progressPercentage,
       estimatedTime: `${moduleLessons.length * 15} min`,
+      isLocked: !hasAccess,
     };
   });
 
@@ -109,7 +117,7 @@ const CourseContent = () => {
                 lessons={module.lessons}
                 progress={module.progress}
                 estimatedTime={module.estimatedTime}
-                isLocked={index > 0 && moduleData[index - 1].progress < 100}
+                isLocked={module.isLocked || (index > 0 && moduleData[index - 1].progress < 100)}
               />
             ))}
           </div>

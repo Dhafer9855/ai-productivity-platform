@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import LessonView from "./pages/LessonView";
 import TestView from "./pages/TestView";
 import ProjectSubmission from "./pages/ProjectSubmission";
+import FinalProject from "./pages/FinalProject";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCanceled from "./pages/PaymentCanceled";
 import NotFound from "./pages/NotFound";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/lesson/:moduleId/:lessonId" element={<LessonView />} />
             <Route path="/test/:testId" element={<TestView />} />
             <Route path="/project-submission" element={<ProjectSubmission />} />
+            <Route path="/final-project" element={<FinalProject />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
