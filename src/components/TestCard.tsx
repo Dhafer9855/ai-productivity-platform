@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +40,7 @@ const TestCard = ({ test, attempt }: TestCardProps) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
-  const { getTestQuestions, submitTestAttempt } = useTests();
+  const { getTestQuestions } = useTests();
 
   const startTest = async () => {
     try {
@@ -89,13 +88,8 @@ const TestCard = ({ test, attempt }: TestCardProps) => {
     setIsCompleted(true);
     setShowResults(true);
 
-    // Submit to database
-    submitTestAttempt({
-      testId: test.id,
-      answers,
-      score: finalScore,
-      totalQuestions: questions.length,
-    });
+    // Note: Test submission is handled by the dedicated TestView page
+    console.log('Test completed with score:', finalScore);
   };
 
   const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
