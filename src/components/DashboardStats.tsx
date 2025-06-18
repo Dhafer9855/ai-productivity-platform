@@ -15,9 +15,10 @@ const DashboardStats = () => {
   const { attempts } = useTests();
 
   const totalLessons = lessons?.length || 0;
+  const totalModules = modules?.length || 0;
   
-  // Calculate completed lessons - for modules with completed tests, count all lessons as completed
-  const completedModules = currentGrade?.completedModules || 0;
+  // Calculate completed modules - count unique modules that have test attempts
+  const completedModules = Math.min(currentGrade?.completedModules || 0, totalModules);
   
   // Get lessons for completed modules
   const completedLessons = modules && lessons ? 
@@ -31,6 +32,9 @@ const DashboardStats = () => {
   // Use current grade for display, fallback to profile grade
   const displayGrade = currentGrade?.grade || userProfile?.overall_grade;
 
+  // Calculate time invested based on completed lessons (15 min per lesson)
+  const timeInvested = completedLessons * 15;
+
   const stats = [
     {
       title: "Overall Progress",
@@ -42,9 +46,9 @@ const DashboardStats = () => {
     {
       title: "Modules Completed",
       value: completedModules,
-      description: `${completedModules} of ${modules?.length || 0} modules`,
+      description: `${completedModules} of ${totalModules} modules`,
       icon: BookOpen,
-      progress: modules?.length ? (completedModules / modules.length) * 100 : 0,
+      progress: totalModules > 0 ? (completedModules / totalModules) * 100 : 0,
     },
     {
       title: "Current Grade",
@@ -55,10 +59,10 @@ const DashboardStats = () => {
     },
     {
       title: "Time Invested",
-      value: `${completedLessons * 15}min`,
+      value: `${timeInvested}min`,
       description: "Estimated learning time",
       icon: Clock,
-      progress: Math.min((completedLessons * 15) / 300 * 100, 100),
+      progress: Math.min((timeInvested / 300) * 100, 100),
     },
   ];
 
