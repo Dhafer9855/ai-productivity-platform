@@ -34,37 +34,37 @@ export const useGrades = () => {
 
       console.log('Fetching current grade for user:', user.id);
 
-      // Get all module test scores from user_progress
-      const { data: progress, error } = await supabase
-        .from('user_progress')
-        .select('module_id, test_score')
+      // Get all test attempts with scores
+      const { data: testAttempts, error: attemptsError } = await supabase
+        .from('test_attempts')
+        .select('test_id, score, total_questions, passed')
         .eq('user_id', user.id)
-        .not('test_score', 'is', null); // Only include modules with test scores
+        .order('completed_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching progress for grade calculation:', error);
+      if (attemptsError) {
+        console.error('Error fetching test attempts:', attemptsError);
         return null;
       }
 
-      console.log('Progress data for grade calculation:', progress);
+      console.log('Test attempts found:', testAttempts);
 
-      if (!progress || progress.length === 0) {
-        console.log('No test scores found');
+      if (!testAttempts || testAttempts.length === 0) {
+        console.log('No test attempts found');
         return null;
       }
 
-      // Calculate average test scores
-      const testScores = progress
-        .filter(p => p.test_score !== null && p.test_score !== undefined)
-        .map(p => p.test_score);
-
-      console.log('Test scores found:', testScores);
+      // Calculate grade as percentage for each test
+      const testScores = testAttempts.map(attempt => {
+        const percentage = (attempt.score / attempt.total_questions) * 100;
+        console.log(`Test ${attempt.test_id}: ${attempt.score}/${attempt.total_questions} = ${percentage}%`);
+        return percentage;
+      });
 
       if (testScores.length === 0) return null;
 
       const overallGrade = testScores.reduce((sum, score) => sum + score, 0) / testScores.length;
       
-      console.log('Calculated overall grade:', overallGrade, 'from', testScores.length, 'modules');
+      console.log('Calculated overall grade:', overallGrade, 'from', testScores.length, 'tests');
       
       return {
         grade: Math.round(overallGrade * 10) / 10, // Round to 1 decimal place
@@ -81,29 +81,28 @@ export const useGrades = () => {
 
       console.log('Starting grade calculation mutation for user:', user.id);
 
-      // Get all module test scores
-      const { data: progress, error } = await supabase
-        .from('user_progress')
-        .select('module_id, test_score, assignment_score')
-        .eq('user_id', user.id)
-        .not('test_score', 'is', null); // Only include modules with test scores
+      // Get all test attempts with scores
+      const { data: testAttempts, error: attemptsError } = await supabase
+        .from('test_attempts')
+        .select('test_id, score, total_questions, passed')
+        .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Error fetching progress for mutation:', error);
-        throw error;
+      if (attemptsError) {
+        console.error('Error fetching test attempts for mutation:', attemptsError);
+        throw attemptsError;
       }
 
-      console.log('Progress data for mutation:', progress);
+      console.log('Test attempts for mutation:', testAttempts);
 
-      if (!progress || progress.length === 0) {
-        console.log('No test scores found in mutation');
+      if (!testAttempts || testAttempts.length === 0) {
+        console.log('No test attempts found in mutation');
         return null;
       }
 
-      // Calculate average test scores
-      const testScores = progress
-        .filter(p => p.test_score !== null && p.test_score !== undefined)
-        .map(p => p.test_score);
+      // Calculate grade as percentage for each test
+      const testScores = testAttempts.map(attempt => {
+        return (attempt.score / attempt.total_questions) * 100;
+      });
 
       if (testScores.length === 0) return null;
 
@@ -159,7 +158,7 @@ export const useGrades = () => {
     },
   });
 
-  // Auto-calculate grade when test scores change
+  // Auto-calculate grade when test attempts change
   useEffect(() => {
     if (currentGrade?.completedModules && user) {
       console.log('Triggering grade calculation due to completed modules change:', currentGrade.completedModules);

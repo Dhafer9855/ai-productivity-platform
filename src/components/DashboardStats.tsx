@@ -5,22 +5,20 @@ import { Trophy, BookOpen, Clock, Target } from "lucide-react";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useGrades } from "@/hooks/useGrades";
+import { useTests } from "@/hooks/useTests";
 import GradeDisplay from "./GradeDisplay";
 
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
   const { progress } = useUserProgress();
   const { userProfile, currentGrade } = useGrades();
+  const { attempts } = useTests();
 
   const totalLessons = lessons?.length || 0;
   const completedLessons = progress?.filter(p => p.completed).length || 0;
-  const completedModules = modules?.filter(module => {
-    const moduleLessons = lessons?.filter(lesson => lesson.module_id === module.id) || [];
-    const moduleCompletedLessons = moduleLessons.filter(lesson => 
-      progress?.some(p => p.lesson_id === lesson.id && p.completed)
-    );
-    return moduleLessons.length > 0 && moduleCompletedLessons.length === moduleLessons.length;
-  }).length || 0;
+  
+  // Calculate completed modules based on test attempts instead
+  const completedModules = attempts?.length || 0;
 
   const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
