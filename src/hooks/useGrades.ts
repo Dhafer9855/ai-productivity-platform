@@ -53,7 +53,7 @@ export const useGrades = () => {
         return null;
       }
 
-      // Calculate grade as percentage for each test
+      // Calculate grade as percentage for each test (score/total_questions is already a ratio)
       const testScores = testAttempts.map(attempt => {
         const percentage = (attempt.score / attempt.total_questions) * 100;
         console.log(`Test ${attempt.test_id}: ${attempt.score}/${attempt.total_questions} = ${percentage}%`);
@@ -113,7 +113,7 @@ export const useGrades = () => {
       // Check if eligible for certificate (80% average and completed at least 7 modules)
       const eligibleForCertificate = overallGrade >= 80 && testScores.length >= 7;
 
-      // Update user profile
+      // Update user profile - store as percentage (0-100), not decimal
       const updates: any = { 
         overall_grade: Math.round(overallGrade * 10) / 10 // Round to 1 decimal place
       };

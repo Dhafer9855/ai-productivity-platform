@@ -15,10 +15,12 @@ const DashboardStats = () => {
   const { attempts } = useTests();
 
   const totalLessons = lessons?.length || 0;
+  
+  // Calculate completed lessons across all modules based on progress records
   const completedLessons = progress?.filter(p => p.completed).length || 0;
   
-  // Calculate completed modules based on test attempts instead
-  const completedModules = attempts?.length || 0;
+  // Use actual test attempts for completed modules
+  const completedModules = currentGrade?.completedModules || 0;
 
   const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
