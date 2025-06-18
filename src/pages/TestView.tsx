@@ -75,11 +75,20 @@ const TestView = () => {
 
   const submitTestMutation = useMutation({
     mutationFn: async ({ finalScore, totalQuestions }: { finalScore: number; totalQuestions: number }) => {
-      if (!user?.id || !testId) throw new Error('Missing user or test ID');
+      if (!user?.id || !testId || !test) {
+        throw new Error('Missing required data for test submission');
+      }
 
-      console.log('Submitting test with score:', finalScore);
+      console.log('Starting test submission:', { 
+        testId: parseInt(testId), 
+        userId: user.id, 
+        score: finalScore, 
+        totalQuestions,
+        moduleId: test.module_id
+      });
 
-      const { error } = await supabase
+      // Insert test attempt
+      const { data: attemptData, error: attemptError } = await supabase
         .from('test_attempts')
         .insert({
           test_id: parseInt(testId),
@@ -87,19 +96,23 @@ const TestView = () => {
           answers,
           score: finalScore,
           total_questions: totalQuestions,
-        });
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Test attempt insertion error:', error);
-        throw error;
+      if (attemptError) {
+        console.error('Test attempt insertion error:', attemptError);
+        throw new Error(`Failed to save test attempt: ${attemptError.message}`);
       }
+
+      console.log('Test attempt saved successfully:', attemptData);
 
       // Update user progress with test score
       const { error: progressError } = await supabase
         .from('user_progress')
         .upsert({
           user_id: user.id,
-          module_id: test?.module_id,
+          module_id: test.module_id,
           test_score: finalScore,
         }, {
           onConflict: 'user_id,module_id'
@@ -107,12 +120,14 @@ const TestView = () => {
 
       if (progressError) {
         console.error('Progress update error:', progressError);
-        throw progressError;
+        throw new Error(`Failed to update progress: ${progressError.message}`);
       }
 
+      console.log('Progress updated successfully');
       return finalScore;
     },
     onSuccess: (finalScore) => {
+      console.log('Test submission successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['test_attempts'] });
       queryClient.invalidateQueries({ queryKey: ['userProgress'] });
       queryClient.invalidateQueries({ queryKey: ['user_profile'] });
@@ -124,11 +139,11 @@ const TestView = () => {
         description: `You scored ${finalScore}%`,
       });
     },
-    onError: (error) => {
-      console.error('Error submitting test:', error);
+    onError: (error: any) => {
+      console.error('Test submission error:', error);
       toast({
         title: "Test Submission Failed",
-        description: "There was an error submitting your test. Please try again.",
+        description: error.message || "There was an error submitting your test. Please try again.",
         variant: "destructive",
       });
     },
