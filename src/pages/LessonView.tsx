@@ -86,15 +86,22 @@ const LessonView = () => {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      // Get the single module progress record and check if this lesson is completed
       const { data, error } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
-        .eq('lesson_id', parseInt(lessonId!))
+        .eq('module_id', parseInt(moduleId!))
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      
+      // Check if this specific lesson is marked as the completed lesson
+      if (data && data.lesson_id === parseInt(lessonId!)) {
+        return { ...data, completed: data.completed };
+      }
+      
+      return null;
     },
     enabled: !!user?.id && !!lessonId,
   });
@@ -108,20 +115,20 @@ const LessonView = () => {
     mutationFn: async () => {
       if (!user?.id || !lessonId) throw new Error('Missing user or lesson ID');
 
-      // Check if progress record already exists for this specific lesson
+      // Get existing progress record for this module
       const { data: existingProgress } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
-        .eq('lesson_id', parseInt(lessonId))
         .eq('module_id', parseInt(moduleId!))
         .maybeSingle();
 
       if (existingProgress) {
-        // Update existing progress record for this specific lesson
+        // Update existing progress to mark this specific lesson as complete
         const { error } = await supabase
           .from('user_progress')
           .update({
+            lesson_id: parseInt(lessonId),
             completed: true,
             completed_at: new Date().toISOString()
           })
@@ -223,7 +230,7 @@ const LessonView = () => {
     );
   }
 
-  // Only consider lesson completed if it's actually marked as completed in the database OR locally completed
+  // Check if this specific lesson is completed
   const isLessonCompleted = (progress?.completed === true) || isCompleted;
 
   console.log('Lesson completion check:', {

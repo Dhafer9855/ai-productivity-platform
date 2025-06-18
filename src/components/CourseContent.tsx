@@ -1,4 +1,3 @@
-
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useAssignments } from "@/hooks/useAssignments";
@@ -27,37 +26,29 @@ const CourseContent = () => {
   const moduleData = modules.map(module => {
     const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
     
-    // Get all progress records for this module
-    const moduleProgressRecords = progress?.filter(p => p.module_id === module.id) || [];
+    // Get the progress record for this module
+    const moduleProgressRecord = progress?.find(p => p.module_id === module.id);
     
-    console.log(`Module ${module.id} - Raw progress records:`, moduleProgressRecords);
+    console.log(`Module ${module.id} - Progress record:`, moduleProgressRecord);
     console.log(`Module ${module.id} - Module lessons:`, moduleLessons);
     
-    // Count unique completed lessons for this module
-    const completedLessonIds = new Set();
+    // Calculate progress based on current lesson completion vs total lessons
+    let completedLessons = 0;
+    let progressPercentage = 0;
     
-    // Add lesson IDs from progress records where completed is true and lesson_id is not null
-    moduleProgressRecords.forEach(p => {
-      if (p.completed === true && p.lesson_id !== null) {
-        completedLessonIds.add(p.lesson_id);
-      }
-    });
-    
-    const completedLessons = completedLessonIds.size;
-    const progressPercentage = moduleLessons.length > 0 ? (completedLessons / moduleLessons.length) * 100 : 0;
+    if (moduleProgressRecord && moduleProgressRecord.completed && moduleProgressRecord.lesson_id) {
+      // Find which lesson is currently completed
+      const completedLessonOrder = moduleLessons.find(l => l.id === moduleProgressRecord.lesson_id)?.order || 0;
+      completedLessons = completedLessonOrder;
+      progressPercentage = moduleLessons.length > 0 ? (completedLessons / moduleLessons.length) * 100 : 0;
+    }
 
     console.log(`Module ${module.id} progress calculation:`, {
       moduleId: module.id,
       totalLessons: moduleLessons.length,
-      completedLessonIds: Array.from(completedLessonIds),
       completedLessons,
       progressPercentage,
-      moduleProgressRecords: moduleProgressRecords.map(p => ({
-        id: p.id,
-        lesson_id: p.lesson_id,
-        completed: p.completed,
-        completed_at: p.completed_at
-      }))
+      currentCompletedLesson: moduleProgressRecord?.lesson_id
     });
 
     // For module 7, show assignment instead of lessons
@@ -82,7 +73,7 @@ const CourseContent = () => {
         title: lesson.title,
         type: "video" as const,
         duration: "15 min",
-        completed: completedLessonIds.has(lesson.id),
+        completed: moduleProgressRecord?.lesson_id ? lesson.order <= (moduleLessons.find(l => l.id === moduleProgressRecord.lesson_id)?.order || 0) : false,
       })),
       progress: progressPercentage,
       estimatedTime: `${moduleLessons.length * 15} min`,
