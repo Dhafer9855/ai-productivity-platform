@@ -73,7 +73,7 @@ const GradeDisplay = () => {
               <div>
                 <div className="font-medium text-yellow-800">Certificate Earned!</div>
                 <div className="text-sm text-yellow-600">
-                  Issued on {new Date(userProfile.certificate_issued_at!).toLocalDateString()}
+                  Issued on {new Date(userProfile.certificate_issued_at!).toLocaleDateString()}
                 </div>
               </div>
             </div>
