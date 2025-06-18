@@ -65,6 +65,24 @@ const LessonView = () => {
     enabled: !!moduleId,
   });
 
+  // Get all progress for this module to check completion
+  const { data: moduleProgress } = useQuery({
+    queryKey: ['module-progress', moduleId, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('module_id', parseInt(moduleId!));
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!moduleId,
+  });
+
   const { data: progress, refetch: refetchProgress } = useQuery({
     queryKey: ['lesson-progress', lessonId, user?.id],
     queryFn: async () => {
@@ -105,6 +123,7 @@ const LessonView = () => {
       setIsCompleted(true);
       refetchProgress();
       queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+      queryClient.invalidateQueries({ queryKey: ['module-progress'] });
       toast({
         title: "Lesson Completed!",
         description: "Great job! You've marked this lesson as complete.",
@@ -127,7 +146,11 @@ const LessonView = () => {
   
   const isLastLesson = !nextLesson;
   const isFirstLesson = !previousLesson;
-  const isLastLessonOfModule = isLastLesson && moduleTest; // Only show test if there's a test for this module
+
+  // Check if all lessons in the module are completed
+  const completedLessonsInModule = moduleProgress?.filter(p => p.completed && p.lesson_id) || [];
+  const totalLessonsInModule = moduleLessons?.length || 0;
+  const isModuleCompleted = completedLessonsInModule.length === totalLessonsInModule;
 
   const handleNextLesson = () => {
     if (nextLesson) {
@@ -254,10 +277,7 @@ const LessonView = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Ready to continue?</h3>
                   <p className="text-gray-600 text-sm">
-                    {isLastLessonOfModule 
-                      ? "Complete this lesson to take the module test." 
-                      : "Mark this lesson as complete to track your progress."
-                    }
+                    Mark this lesson as complete to track your progress.
                   </p>
                 </div>
                 
@@ -272,26 +292,25 @@ const LessonView = () => {
                     </Button>
                   )}
                   
-                  {!isLastLessonOfModule && (
+                  {!isLastLesson && (
                     <Button 
                       variant="outline" 
                       onClick={handleNextLesson}
-                      disabled={isLastLesson}
                     >
-                      {isLastLesson ? "Course Complete" : "Next Lesson"}
+                      Next Lesson
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   )}
                 </div>
               </div>
 
-              {/* Module Test Section - Only show if this is the last lesson of the module and lesson is completed */}
-              {isLastLessonOfModule && isLessonCompleted && (
+              {/* Module Test Section - Only show if this is the last lesson and all lessons are completed */}
+              {isLastLesson && isModuleCompleted && moduleTest && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <div className="text-center">
                     <h3 className="text-lg font-semibold mb-2">Module {lesson.modules.order} Complete!</h3>
                     <p className="text-gray-600 mb-4">
-                      Ready to test your knowledge? Take the module test to earn your grade.
+                      Congratulations! You've completed all lessons. Ready to test your knowledge?
                     </p>
                     <Button 
                       onClick={handleStartTest}
@@ -300,6 +319,18 @@ const LessonView = () => {
                       <FileText className="h-4 w-4 mr-2" />
                       Start Module {lesson.modules.order} Test
                     </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Show progress message if not all lessons are completed */}
+              {isLastLesson && !isModuleCompleted && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="text-center">
+                    <p className="text-gray-600">
+                      Complete all {totalLessonsInModule} lessons in this module to unlock the test.
+                      ({completedLessonsInModule.length}/{totalLessonsInModule} completed)
+                    </p>
                   </div>
                 </div>
               )}

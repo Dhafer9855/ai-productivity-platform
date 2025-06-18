@@ -6,6 +6,7 @@ import { useTests } from "@/hooks/useTests";
 import ModuleCard from "./ModuleCard";
 import AssignmentCard from "./AssignmentCard";
 import TestCard from "./TestCard";
+import CourseResetButton from "./CourseResetButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CourseContent = () => {
@@ -60,6 +61,11 @@ const CourseContent = () => {
 
   return (
     <div className="space-y-6">
+      {/* Course Reset Button */}
+      <div className="flex justify-end">
+        <CourseResetButton />
+      </div>
+
       <Tabs defaultValue="modules" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="modules">Course Modules</TabsTrigger>
