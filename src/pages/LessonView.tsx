@@ -33,7 +33,6 @@ const LessonView = () => {
     },
   });
 
-  // Fetch all lessons in the current module to determine next lesson
   const { data: moduleLessons } = useQuery({
     queryKey: ['module-lessons', moduleId],
     queryFn: async () => {
@@ -49,7 +48,6 @@ const LessonView = () => {
     enabled: !!moduleId,
   });
 
-  // Check if there's a test for this module
   const { data: moduleTest } = useQuery({
     queryKey: ['module-test', moduleId],
     queryFn: async () => {
@@ -65,7 +63,6 @@ const LessonView = () => {
     enabled: !!moduleId,
   });
 
-  // Get all progress for this module to check completion
   const { data: moduleProgress } = useQuery({
     queryKey: ['module-progress', moduleId, user?.id],
     queryFn: async () => {
@@ -139,7 +136,6 @@ const LessonView = () => {
     },
   });
 
-  // Find the next and previous lessons
   const currentLessonOrder = lesson?.order;
   const nextLesson = moduleLessons?.find(l => l.order === (currentLessonOrder || 0) + 1);
   const previousLesson = moduleLessons?.find(l => l.order === (currentLessonOrder || 0) - 1);
@@ -147,7 +143,6 @@ const LessonView = () => {
   const isLastLesson = !nextLesson;
   const isFirstLesson = !previousLesson;
 
-  // Check if all lessons in the module are completed
   const completedLessonsInModule = moduleProgress?.filter(p => p.completed && p.lesson_id) || [];
   const totalLessonsInModule = moduleLessons?.length || 0;
   const isModuleCompleted = completedLessonsInModule.length === totalLessonsInModule;
@@ -196,7 +191,6 @@ const LessonView = () => {
 
   const isLessonCompleted = progress?.completed || isCompleted;
 
-  // Create lesson object with required description property
   const lessonWithDescription = {
     ...lesson,
     description: lesson.modules.description || "Learn about AI productivity techniques and tools."
@@ -208,7 +202,6 @@ const LessonView = () => {
         <Header />
         
         <main className="max-w-4xl mx-auto px-6 py-8">
-          {/* Navigation */}
           <div className="mb-6">
             <Button 
               variant="ghost" 
@@ -228,7 +221,6 @@ const LessonView = () => {
             </div>
           </div>
 
-          {/* Lesson Header */}
           <Card className="mb-8">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -256,10 +248,8 @@ const LessonView = () => {
             </CardHeader>
           </Card>
 
-          {/* Lesson Content */}
           <LessonContent lesson={lessonWithDescription} />
 
-          {/* Navigation between lessons */}
           <Card className="mt-8">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -274,7 +264,7 @@ const LessonView = () => {
                   </Button>
                 </div>
                 
-                <div>
+                <div className="text-center">
                   <h3 className="font-semibold mb-2">Ready to continue?</h3>
                   <p className="text-gray-600 text-sm">
                     Mark this lesson as complete to track your progress.
@@ -282,6 +272,7 @@ const LessonView = () => {
                 </div>
                 
                 <div className="flex space-x-3">
+                  {/* Always show Mark as Complete button if lesson is not completed */}
                   {!isLessonCompleted && (
                     <Button 
                       onClick={() => markAsCompletedMutation.mutate()}
@@ -292,20 +283,59 @@ const LessonView = () => {
                     </Button>
                   )}
                   
-                  {!isLastLesson && (
+                  {/* Show Next Lesson button only if current lesson is completed and it's not the last lesson */}
+                  {!isLastLesson && isLessonCompleted && (
                     <Button 
-                      variant="outline" 
                       onClick={handleNextLesson}
                     >
                       Next Lesson
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   )}
+
+                  {/* Show Complete Module button if it's the last lesson and current lesson is completed */}
+                  {isLastLesson && isLessonCompleted && (
+                    <Button 
+                      onClick={() => {
+                        toast({
+                          title: "Module Completed!",
+                          description: "Congratulations! You've completed all lessons in this module.",
+                        });
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Complete Module
+                    </Button>
+                  )}
+
+                  {/* Show disabled buttons with explanatory text if lesson is not completed */}
+                  {!isLastLesson && !isLessonCompleted && (
+                    <Button 
+                      variant="outline"
+                      disabled
+                      className="opacity-50"
+                    >
+                      Complete lesson first
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  )}
+
+                  {isLastLesson && !isLessonCompleted && (
+                    <Button 
+                      variant="outline"
+                      disabled
+                      className="opacity-50"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Complete lesson first
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              {/* Module Test Section - Only show if this is the last lesson and all lessons are completed */}
-              {isLastLesson && isModuleCompleted && moduleTest && (
+              {/* Module Test Section - Only show if this is the last lesson, current lesson is completed, and test exists */}
+              {isLastLesson && isLessonCompleted && moduleTest && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <div className="text-center">
                     <h3 className="text-lg font-semibold mb-2">Module {lesson.modules.order} Complete!</h3>
@@ -314,23 +344,11 @@ const LessonView = () => {
                     </p>
                     <Button 
                       onClick={handleStartTest}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Start Module {lesson.modules.order} Test
                     </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Show progress message if not all lessons are completed */}
-              {isLastLesson && !isModuleCompleted && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="text-center">
-                    <p className="text-gray-600">
-                      Complete all {totalLessonsInModule} lessons in this module to unlock the test.
-                      ({completedLessonsInModule.length}/{totalLessonsInModule} completed)
-                    </p>
                   </div>
                 </div>
               )}
