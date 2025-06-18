@@ -34,7 +34,7 @@ export const useGrades = () => {
 
       console.log('Fetching current grade for user:', user.id);
 
-      // Get all test attempts with scores
+      // Get all test attempts with scores - only get the latest attempt per test
       const { data: testAttempts, error: attemptsError } = await supabase
         .from('test_attempts')
         .select('test_id, score, total_questions, passed')
@@ -53,8 +53,19 @@ export const useGrades = () => {
         return null;
       }
 
-      // Calculate grade - score is already the number of correct answers
-      const testScores = testAttempts.map(attempt => {
+      // Get unique test attempts (latest attempt per test)
+      const uniqueTestAttempts = testAttempts.reduce((acc, attempt) => {
+        if (!acc[attempt.test_id]) {
+          acc[attempt.test_id] = attempt;
+        }
+        return acc;
+      }, {} as Record<number, typeof testAttempts[0]>);
+
+      const uniqueAttempts = Object.values(uniqueTestAttempts);
+      console.log('Unique test attempts:', uniqueAttempts);
+
+      // Calculate grade - score is already the number of correct answers, convert to percentage
+      const testScores = uniqueAttempts.map(attempt => {
         const percentage = (attempt.score / attempt.total_questions) * 100;
         console.log(`Test ${attempt.test_id}: ${attempt.score}/${attempt.total_questions} = ${percentage}%`);
         return percentage;
@@ -68,7 +79,7 @@ export const useGrades = () => {
       
       return {
         grade: Math.round(overallGrade * 10) / 10, // Round to 1 decimal place
-        completedModules: testScores.length
+        completedModules: uniqueAttempts.length // Count unique completed tests/modules
       };
     },
     enabled: !!user,
@@ -81,11 +92,12 @@ export const useGrades = () => {
 
       console.log('Starting grade calculation mutation for user:', user.id);
 
-      // Get all test attempts with scores
+      // Get all test attempts with scores - only latest per test
       const { data: testAttempts, error: attemptsError } = await supabase
         .from('test_attempts')
         .select('test_id, score, total_questions, passed')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false });
 
       if (attemptsError) {
         console.error('Error fetching test attempts for mutation:', attemptsError);
@@ -99,8 +111,18 @@ export const useGrades = () => {
         return null;
       }
 
-      // Calculate grade - score is already the number of correct answers
-      const testScores = testAttempts.map(attempt => {
+      // Get unique test attempts (latest attempt per test)
+      const uniqueTestAttempts = testAttempts.reduce((acc, attempt) => {
+        if (!acc[attempt.test_id]) {
+          acc[attempt.test_id] = attempt;
+        }
+        return acc;
+      }, {} as Record<number, typeof testAttempts[0]>);
+
+      const uniqueAttempts = Object.values(uniqueTestAttempts);
+
+      // Calculate grade - score is already the number of correct answers, convert to percentage once
+      const testScores = uniqueAttempts.map(attempt => {
         return (attempt.score / attempt.total_questions) * 100;
       });
 
