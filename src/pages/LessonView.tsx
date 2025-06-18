@@ -1,5 +1,6 @@
+
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -10,11 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Clock, CheckCircle } from "lucide-react";
 import LessonContent from "@/components/lesson/LessonContent";
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 const LessonView = () => {
   const { moduleId, lessonId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
 
   const { data: lesson, isLoading } = useQuery({
@@ -47,7 +50,7 @@ const LessonView = () => {
     enabled: !!moduleId,
   });
 
-  const { data: progress } = useQuery({
+  const { data: progress, refetch: refetchProgress } = useQuery({
     queryKey: ['lesson-progress', lessonId, user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -65,23 +68,42 @@ const LessonView = () => {
     enabled: !!user?.id && !!lessonId,
   });
 
-  const markAsCompleted = async () => {
-    if (!user?.id || !lessonId) return;
+  const markAsCompletedMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id || !lessonId) throw new Error('Missing user or lesson ID');
 
-    const { error } = await supabase
-      .from('user_progress')
-      .upsert({
-        user_id: user.id,
-        lesson_id: parseInt(lessonId),
-        module_id: parseInt(moduleId!),
-        completed: true,
-        completed_at: new Date().toISOString()
-      });
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          lesson_id: parseInt(lessonId),
+          module_id: parseInt(moduleId!),
+          completed: true,
+          completed_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,lesson_id'
+        });
 
-    if (!error) {
+      if (error) throw error;
+    },
+    onSuccess: () => {
       setIsCompleted(true);
-    }
-  };
+      refetchProgress();
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+      toast({
+        title: "Lesson Completed!",
+        description: "Great job! You've marked this lesson as complete.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error marking lesson as complete:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark lesson as complete. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Find the next and previous lessons
   const currentLessonOrder = lesson?.order;
@@ -216,9 +238,12 @@ const LessonView = () => {
                 
                 <div className="flex space-x-3">
                   {!isLessonCompleted && (
-                    <Button onClick={markAsCompleted}>
+                    <Button 
+                      onClick={() => markAsCompletedMutation.mutate()}
+                      disabled={markAsCompletedMutation.isPending}
+                    >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Mark as Complete
+                      {markAsCompletedMutation.isPending ? "Marking..." : "Mark as Complete"}
                     </Button>
                   )}
                   
@@ -227,8 +252,8 @@ const LessonView = () => {
                     onClick={handleNextLesson}
                     disabled={isLastLesson}
                   >
-                    <ArrowRight className="h-4 w-4 mr-2" />
                     {isLastLesson ? "Course Complete" : "Next Lesson"}
+                    <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
               </div>
