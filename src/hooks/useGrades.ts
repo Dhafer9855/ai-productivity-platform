@@ -25,6 +25,46 @@ export const useGrades = () => {
     enabled: !!user,
   });
 
+  // Get current module test scores to show real-time grade
+  const { data: currentGrade } = useQuery({
+    queryKey: ['current_grade', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+
+      // Get all module test scores
+      const { data: progress, error } = await supabase
+        .from('user_progress')
+        .select('module_id, test_score')
+        .eq('user_id', user.id)
+        .not('test_score', 'is', null); // Only include modules with test scores
+
+      if (error) {
+        console.error('Error fetching progress:', error);
+        return null;
+      }
+
+      if (!progress || progress.length === 0) {
+        console.log('No test scores found');
+        return null;
+      }
+
+      // Calculate average test scores
+      const testScores = progress
+        .filter(p => p.test_score !== null)
+        .map(p => p.test_score);
+
+      if (testScores.length === 0) return null;
+
+      const overallGrade = testScores.reduce((sum, score) => sum + score, 0) / testScores.length;
+      
+      return {
+        grade: Math.round(overallGrade * 10) / 10, // Round to 1 decimal place
+        completedModules: testScores.length
+      };
+    },
+    enabled: !!user,
+  });
+
   const calculateOverallGrade = async () => {
     if (!user) return;
 
@@ -74,6 +114,7 @@ export const useGrades = () => {
       console.error('Error updating grade:', updateError);
     } else {
       queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['current_grade'] });
       if (eligibleForCertificate && !userProfile?.certificate_earned) {
         toast({
           title: "Congratulations! 🎉",
@@ -85,6 +126,7 @@ export const useGrades = () => {
 
   return {
     userProfile,
+    currentGrade,
     calculateOverallGrade,
   };
 };

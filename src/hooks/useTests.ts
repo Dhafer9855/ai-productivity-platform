@@ -57,7 +57,10 @@ export const useTests = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { error } = await supabase
+      console.log('Submitting test attempt:', { testId, score, totalQuestions, userId: user.id });
+
+      // First insert the test attempt
+      const { error: testError } = await supabase
         .from('test_attempts')
         .insert({
           test_id: testId,
@@ -67,19 +70,57 @@ export const useTests = () => {
           total_questions: totalQuestions,
         });
 
-      if (error) throw error;
+      if (testError) {
+        console.error('Error inserting test attempt:', testError);
+        throw testError;
+      }
+
+      // Get the test to find the module_id
+      const { data: test, error: testFetchError } = await supabase
+        .from('tests')
+        .select('module_id')
+        .eq('id', testId)
+        .single();
+
+      if (testFetchError) {
+        console.error('Error fetching test module:', testFetchError);
+        throw testFetchError;
+      }
+
+      // Update user progress with test score
+      const { error: progressError } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          module_id: test.module_id,
+          test_score: score,
+        }, {
+          onConflict: 'user_id,module_id'
+        });
+
+      if (progressError) {
+        console.error('Error updating user progress:', progressError);
+        throw progressError;
+      }
+
+      return { score, testId, moduleId: test.module_id };
     },
-    onSuccess: () => {
+    onSuccess: ({ score }) => {
       queryClient.invalidateQueries({ queryKey: ['test_attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['module-progress'] });
+      
       toast({
-        title: "Test Completed",
-        description: "Your test has been submitted!",
+        title: "Test Completed Successfully!",
+        description: `You scored ${score}%`,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Test submission error:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit test",
+        title: "Test Submission Error",
+        description: "There was an issue submitting your test. Your answers may have been saved.",
         variant: "destructive",
       });
     },

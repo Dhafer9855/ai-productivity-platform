@@ -77,6 +77,8 @@ const TestView = () => {
     mutationFn: async ({ finalScore, totalQuestions }: { finalScore: number; totalQuestions: number }) => {
       if (!user?.id || !testId) throw new Error('Missing user or test ID');
 
+      console.log('Submitting test with score:', finalScore);
+
       const { error } = await supabase
         .from('test_attempts')
         .insert({
@@ -87,7 +89,10 @@ const TestView = () => {
           total_questions: totalQuestions,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Test attempt insertion error:', error);
+        throw error;
+      }
 
       // Update user progress with test score
       const { error: progressError } = await supabase
@@ -100,7 +105,10 @@ const TestView = () => {
           onConflict: 'user_id,module_id'
         });
 
-      if (progressError) throw progressError;
+      if (progressError) {
+        console.error('Progress update error:', progressError);
+        throw progressError;
+      }
 
       return finalScore;
     },
@@ -108,17 +116,19 @@ const TestView = () => {
       queryClient.invalidateQueries({ queryKey: ['test_attempts'] });
       queryClient.invalidateQueries({ queryKey: ['userProgress'] });
       queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['current_grade'] });
+      queryClient.invalidateQueries({ queryKey: ['module-progress'] });
       
       toast({
-        title: "Test Completed!",
+        title: "Test Completed Successfully!",
         description: `You scored ${finalScore}%`,
       });
     },
     onError: (error) => {
       console.error('Error submitting test:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit test. Please try again.",
+        title: "Test Submission Failed",
+        description: "There was an error submitting your test. Please try again.",
         variant: "destructive",
       });
     },

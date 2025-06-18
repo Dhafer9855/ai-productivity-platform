@@ -5,9 +5,7 @@ import { Trophy, Award, Star } from "lucide-react";
 import { useGrades } from "@/hooks/useGrades";
 
 const GradeDisplay = () => {
-  const { userProfile } = useGrades();
-
-  if (!userProfile) return null;
+  const { userProfile, currentGrade } = useGrades();
 
   const getGradeColor = (grade: number) => {
     if (grade >= 90) return "text-green-600";
@@ -24,6 +22,10 @@ const GradeDisplay = () => {
     return "F";
   };
 
+  // Use current grade if available, fallback to profile grade
+  const displayGrade = currentGrade?.grade || userProfile?.overall_grade;
+  const hasGrade = displayGrade !== null && displayGrade !== undefined;
+
   return (
     <Card>
       <CardHeader>
@@ -35,22 +37,27 @@ const GradeDisplay = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {userProfile.overall_grade !== null ? (
+          {hasGrade ? (
             <div className="text-center">
-              <div className={`text-4xl font-bold ${getGradeColor(userProfile.overall_grade)}`}>
-                {userProfile.overall_grade.toFixed(1)}%
+              <div className={`text-4xl font-bold ${getGradeColor(displayGrade)}`}>
+                {displayGrade.toFixed(1)}%
               </div>
               <div className="text-lg text-gray-600">
-                Grade: {getGradeLetter(userProfile.overall_grade)}
+                Grade: {getGradeLetter(displayGrade)}
               </div>
+              {currentGrade?.completedModules && (
+                <div className="text-sm text-gray-500 mt-2">
+                  Based on {currentGrade.completedModules} completed module{currentGrade.completedModules !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center text-gray-500">
-              Complete more modules to see your grade
+              Complete a module test to see your grade
             </div>
           )}
 
-          {userProfile.certificate_earned && (
+          {userProfile?.certificate_earned && (
             <div className="flex items-center justify-center gap-2 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
               <Trophy className="h-6 w-6 text-yellow-600" />
               <div>
