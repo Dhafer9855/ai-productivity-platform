@@ -5,6 +5,8 @@ import { GraduationCap, Clock, Target, Trophy, BookOpen, Users, CheckCircle, Pla
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import AuthModal from "@/components/auth/AuthModal";
 
 const Index = () => {
@@ -12,7 +14,35 @@ const Index = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const handleGetStarted = () => {
+  // Check if user has any progress
+  const { data: hasProgress } = useQuery({
+    queryKey: ['userHasProgress', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) return false;
+      return data && data.length > 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  const getButtonText = () => {
+    if (!user) return "Get Started";
+    return hasProgress ? "Continue Learning" : "Get Started";
+  };
+
+  const getButtonIcon = () => {
+    if (!user) return Play;
+    return hasProgress ? GraduationCap : Play;
+  };
+
+  const handleMainAction = () => {
     if (user) {
       navigate('/dashboard');
     } else {
@@ -119,6 +149,8 @@ const Index = () => {
     },
   ];
 
+  const ButtonIcon = getButtonIcon();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <Header />
@@ -164,10 +196,10 @@ const Index = () => {
               <Button 
                 size="lg" 
                 className="px-8 py-4 text-lg font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                onClick={handleGetStarted}
+                onClick={handleMainAction}
               >
-                <Play className="h-5 w-5 mr-2" />
-                {user ? 'Continue Learning' : 'Start Learning Now'}
+                <ButtonIcon className="h-5 w-5 mr-2" />
+                {getButtonText()}
               </Button>
               <PaymentButton />
             </div>
@@ -262,9 +294,9 @@ const Index = () => {
                 size="lg" 
                 variant="secondary"
                 className="px-8 py-4 text-lg font-medium"
-                onClick={handleGetStarted}
+                onClick={handleMainAction}
               >
-                {user ? 'Go to Dashboard' : 'Get Started Now'}
+                {getButtonText()}
               </Button>
               <PaymentButton />
             </div>
