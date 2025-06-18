@@ -19,29 +19,45 @@ const CourseContent = () => {
     return <div>Loading course content...</div>;
   }
 
+  console.log('All progress data:', progress);
+  console.log('All lessons data:', lessons);
+  console.log('All modules data:', modules);
+
   // Transform data for ModuleCard compatibility
   const moduleData = modules.map(module => {
     const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
     
-    // Fix progress calculation - count unique completed lessons for this module
-    const completedLessonIds = new Set(
-      progress?.filter(p => 
-        p.module_id === module.id && 
-        p.completed === true && 
-        p.lesson_id !== null
-      ).map(p => p.lesson_id) || []
-    );
+    // Get all progress records for this module
+    const moduleProgressRecords = progress?.filter(p => p.module_id === module.id) || [];
+    
+    console.log(`Module ${module.id} - Raw progress records:`, moduleProgressRecords);
+    console.log(`Module ${module.id} - Module lessons:`, moduleLessons);
+    
+    // Count unique completed lessons for this module
+    const completedLessonIds = new Set();
+    
+    // Add lesson IDs from progress records where completed is true and lesson_id is not null
+    moduleProgressRecords.forEach(p => {
+      if (p.completed === true && p.lesson_id !== null) {
+        completedLessonIds.add(p.lesson_id);
+      }
+    });
     
     const completedLessons = completedLessonIds.size;
     const progressPercentage = moduleLessons.length > 0 ? (completedLessons / moduleLessons.length) * 100 : 0;
 
     console.log(`Module ${module.id} progress calculation:`, {
       moduleId: module.id,
-      moduleLessons: moduleLessons.length,
+      totalLessons: moduleLessons.length,
       completedLessonIds: Array.from(completedLessonIds),
       completedLessons,
       progressPercentage,
-      allProgress: progress?.filter(p => p.module_id === module.id)
+      moduleProgressRecords: moduleProgressRecords.map(p => ({
+        id: p.id,
+        lesson_id: p.lesson_id,
+        completed: p.completed,
+        completed_at: p.completed_at
+      }))
     });
 
     // For module 7, show assignment instead of lessons
