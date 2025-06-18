@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, Clock, CheckCircle } from "lucide-react";
+import { generateAIProductivityAuditTemplate, downloadTemplate } from "@/utils/templateGenerator";
 
 const Practice = () => {
   const { moduleId, lessonId } = useParams();
@@ -28,6 +28,11 @@ const Practice = () => {
       return data;
     },
   });
+
+  const handleDownloadTemplate = () => {
+    const template = generateAIProductivityAuditTemplate();
+    downloadTemplate(template, 'AI_Productivity_Audit_Template.txt');
+  };
 
   const getPracticeContent = (lessonOrder: number) => {
     const practiceContent = {
@@ -334,7 +339,10 @@ const Practice = () => {
                   <h3 className="font-semibold text-lg mb-2">{practiceContent.downloadable.title}</h3>
                   <p className="text-gray-600">{practiceContent.downloadable.description}</p>
                 </div>
-                <Button className="bg-green-600 hover:bg-green-700">
+                <Button 
+                  onClick={handleDownloadTemplate}
+                  className="bg-green-600 hover:bg-green-700"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download Template
                 </Button>

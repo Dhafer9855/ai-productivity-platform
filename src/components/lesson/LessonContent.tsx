@@ -350,6 +350,101 @@ A fully functional AI-powered project management system that reduces manual over
     navigate(`/practice/${moduleId}/${lesson.id}`);
   };
 
+  const formatContent = (text: string) => {
+    const sections = text.split('\n\n');
+    
+    return sections.map((section, index) => {
+      // Handle bold headers
+      if (section.startsWith('**') && section.endsWith('**') && !section.includes(':')) {
+        return (
+          <h3 key={index} className="text-xl font-bold text-gray-900 mt-6 mb-4">
+            {section.replace(/\*\*/g, '')}
+          </h3>
+        );
+      }
+      
+      // Handle subheaders with colons
+      if (section.startsWith('**') && section.includes(':**')) {
+        const [title, ...content] = section.split(':**');
+        return (
+          <div key={index} className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-3">
+              {title.replace(/\*\*/g, '')}:
+            </h4>
+            {content.length > 0 && (
+              <div className="text-gray-700 leading-relaxed">
+                {content.join(':**')}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Handle bullet point lists
+      if (section.includes('- **')) {
+        const items = section.split('\n').filter(item => item.trim().startsWith('- **'));
+        return (
+          <div key={index} className="mb-6">
+            <div className="space-y-4">
+              {items.map((item, itemIndex) => {
+                const cleanItem = item.replace(/^- \*\*/, '').replace(/\*\*:/, ':');
+                const [title, ...description] = cleanItem.split(': ');
+                return (
+                  <div key={itemIndex} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-200">
+                    <h5 className="font-semibold text-blue-900 mb-2">{title}</h5>
+                    {description.length > 0 && (
+                      <p className="text-blue-800 text-sm leading-relaxed">
+                        {description.join(': ')}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      // Handle regular bullet points
+      if (section.includes('\n- ')) {
+        const lines = section.split('\n');
+        const beforeList = lines.filter(line => !line.trim().startsWith('- '));
+        const listItems = lines.filter(line => line.trim().startsWith('- '));
+        
+        return (
+          <div key={index} className="mb-6">
+            {beforeList.length > 0 && (
+              <div className="mb-3">
+                {beforeList.map((line, lineIndex) => (
+                  <p key={lineIndex} className="text-gray-700 leading-relaxed mb-2">
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+            <ul className="space-y-2 ml-4">
+              {listItems.map((item, itemIndex) => (
+                <li key={itemIndex} className="flex items-start">
+                  <div className="bg-blue-500 rounded-full w-2 h-2 mt-2 mr-3 flex-shrink-0"></div>
+                  <span className="text-gray-700 leading-relaxed">
+                    {item.replace(/^- /, '')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+
+      // Handle regular paragraphs
+      return (
+        <p key={index} className="text-gray-700 leading-relaxed mb-4">
+          {section}
+        </p>
+      );
+    });
+  };
+
   return (
     <div className="space-y-8">
       {/* Lesson Overview */}
@@ -374,13 +469,13 @@ A fully functional AI-powered project management system that reduces manual over
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {content.keyTopics.map((topic, index) => (
               <li key={index} className="flex items-start">
                 <div className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">
                   {index + 1}
                 </div>
-                <span className="text-gray-700">{topic}</span>
+                <span className="text-gray-700 leading-relaxed">{topic}</span>
               </li>
             ))}
           </ul>
@@ -406,42 +501,7 @@ A fully functional AI-powered project management system that reduces manual over
           </CardHeader>
           <CardContent>
             <div className="prose prose-gray max-w-none">
-              {section.content.split('\n\n').map((paragraph, pIndex) => {
-                if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                  return (
-                    <h4 key={pIndex} className="font-semibold text-gray-900 mt-6 mb-3">
-                      {paragraph.replace(/\*\*/g, '')}
-                    </h4>
-                  );
-                }
-                if (paragraph.startsWith('- **')) {
-                  const items = paragraph.split('\n').filter(item => item.trim());
-                  return (
-                    <ul key={pIndex} className="space-y-3 my-4">
-                      {items.map((item, itemIndex) => {
-                        const cleanItem = item.replace(/^- \*\*/, '').replace(/\*\*:/, ':');
-                        const [title, ...description] = cleanItem.split(': ');
-                        return (
-                          <li key={itemIndex} className="flex items-start">
-                            <div className="bg-blue-100 text-blue-600 rounded-full w-2 h-2 mt-2 mr-3 flex-shrink-0"></div>
-                            <div>
-                              <span className="font-medium text-gray-900">{title}:</span>
-                              {description.length > 0 && (
-                                <span className="text-gray-700 ml-1">{description.join(': ')}</span>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  );
-                }
-                return (
-                  <p key={pIndex} className="text-gray-700 leading-relaxed mb-4">
-                    {paragraph}
-                  </p>
-                );
-              })}
+              {formatContent(section.content)}
             </div>
           </CardContent>
         </Card>
