@@ -32,120 +32,80 @@ export const useGrades = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      console.log('Fetching current grade for user:', user.id);
-
-      // Get all test attempts with scores - only get the latest attempt per test
-      const { data: testAttempts, error: attemptsError } = await supabase
-        .from('test_attempts')
-        .select('test_id, score, total_questions, passed')
+      // Get all module test scores
+      const { data: progress, error } = await supabase
+        .from('user_progress')
+        .select('module_id, test_score')
         .eq('user_id', user.id)
-        .order('completed_at', { ascending: false });
+        .not('test_score', 'is', null); // Only include modules with test scores
 
-      if (attemptsError) {
-        console.error('Error fetching test attempts:', attemptsError);
+      if (error) {
+        console.error('Error fetching progress:', error);
         return null;
       }
 
-      console.log('Test attempts found:', testAttempts);
-
-      if (!testAttempts || testAttempts.length === 0) {
-        console.log('No test attempts found');
+      if (!progress || progress.length === 0) {
+        console.log('No test scores found');
         return null;
       }
 
-      // Get unique test attempts (latest attempt per test)
-      const uniqueTestAttempts = testAttempts.reduce((acc, attempt) => {
-        if (!acc[attempt.test_id]) {
-          acc[attempt.test_id] = attempt;
-        }
-        return acc;
-      }, {} as Record<number, typeof testAttempts[0]>);
-
-      const uniqueAttempts = Object.values(uniqueTestAttempts);
-      console.log('Unique test attempts:', uniqueAttempts);
-
-      // Calculate grade - score is already the number of correct answers, convert to percentage
-      const testScores = uniqueAttempts.map(attempt => {
-        const percentage = (attempt.score / attempt.total_questions) * 100;
-        console.log(`Test ${attempt.test_id}: ${attempt.score}/${attempt.total_questions} = ${percentage}%`);
-        return percentage;
-      });
+      // Calculate average test scores
+      const testScores = progress
+        .filter(p => p.test_score !== null)
+        .map(p => p.test_score);
 
       if (testScores.length === 0) return null;
 
       const overallGrade = testScores.reduce((sum, score) => sum + score, 0) / testScores.length;
       
-      console.log('Calculated overall grade:', overallGrade, 'from', testScores.length, 'tests');
-      
       return {
         grade: Math.round(overallGrade * 10) / 10, // Round to 1 decimal place
-        completedModules: uniqueAttempts.length // Count unique completed tests/modules
+        completedModules: testScores.length
       };
     },
     enabled: !!user,
-    refetchInterval: 5000, // Refetch every 5 seconds to ensure real-time updates
   });
 
   const calculateOverallGradeMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('Starting grade calculation mutation for user:', user.id);
-
-      // Get all test attempts with scores - only latest per test
-      const { data: testAttempts, error: attemptsError } = await supabase
-        .from('test_attempts')
-        .select('test_id, score, total_questions, passed')
+      // Get all module test scores
+      const { data: progress, error } = await supabase
+        .from('user_progress')
+        .select('module_id, test_score, assignment_score')
         .eq('user_id', user.id)
-        .order('completed_at', { ascending: false });
+        .not('test_score', 'is', null); // Only include modules with test scores
 
-      if (attemptsError) {
-        console.error('Error fetching test attempts for mutation:', attemptsError);
-        throw attemptsError;
+      if (error) {
+        console.error('Error fetching progress:', error);
+        throw error;
       }
 
-      console.log('Test attempts for mutation:', testAttempts);
-
-      if (!testAttempts || testAttempts.length === 0) {
-        console.log('No test attempts found in mutation');
+      if (!progress || progress.length === 0) {
+        console.log('No test scores found');
         return null;
       }
 
-      // Get unique test attempts (latest attempt per test)
-      const uniqueTestAttempts = testAttempts.reduce((acc, attempt) => {
-        if (!acc[attempt.test_id]) {
-          acc[attempt.test_id] = attempt;
-        }
-        return acc;
-      }, {} as Record<number, typeof testAttempts[0]>);
-
-      const uniqueAttempts = Object.values(uniqueTestAttempts);
-
-      // Calculate grade - score is already the number of correct answers, convert to percentage once
-      const testScores = uniqueAttempts.map(attempt => {
-        return (attempt.score / attempt.total_questions) * 100;
-      });
+      // Calculate average test scores
+      const testScores = progress
+        .filter(p => p.test_score !== null)
+        .map(p => p.test_score);
 
       if (testScores.length === 0) return null;
 
       const overallGrade = testScores.reduce((sum, score) => sum + score, 0) / testScores.length;
 
-      console.log('Mutation calculated grade:', overallGrade, 'from', testScores.length, 'test scores');
-
       // Check if eligible for certificate (80% average and completed at least 7 modules)
       const eligibleForCertificate = overallGrade >= 80 && testScores.length >= 7;
 
-      // Update user profile - store as percentage (0-100), not decimal
-      const updates: any = { 
-        overall_grade: Math.round(overallGrade * 10) / 10 // Round to 1 decimal place
-      };
+      // Update user profile
+      const updates: any = { overall_grade: overallGrade };
       
       if (eligibleForCertificate && !userProfile?.certificate_earned) {
         updates.certificate_earned = true;
         updates.certificate_issued_at = new Date().toISOString();
       }
-
-      console.log('Updating user profile with:', updates);
 
       const { error: updateError } = await supabase
         .from('user_profiles')
@@ -157,13 +117,10 @@ export const useGrades = () => {
         throw updateError;
       }
 
-      console.log('Successfully updated user profile');
-
-      return { overallGrade: updates.overall_grade, eligibleForCertificate };
+      return { overallGrade, eligibleForCertificate };
     },
     onSuccess: (result) => {
       if (result) {
-        console.log('Grade calculation successful:', result);
         queryClient.invalidateQueries({ queryKey: ['user_profile'] });
         queryClient.invalidateQueries({ queryKey: ['current_grade'] });
         
@@ -175,15 +132,11 @@ export const useGrades = () => {
         }
       }
     },
-    onError: (error) => {
-      console.error('Grade calculation failed:', error);
-    },
   });
 
-  // Auto-calculate grade when test attempts change
+  // Auto-calculate grade when test scores change
   useEffect(() => {
-    if (currentGrade?.completedModules && user) {
-      console.log('Triggering grade calculation due to completed modules change:', currentGrade.completedModules);
+    if (currentGrade?.grade && user) {
       calculateOverallGradeMutation.mutate();
     }
   }, [currentGrade?.completedModules, user?.id]);

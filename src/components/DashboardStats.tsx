@@ -5,35 +5,24 @@ import { Trophy, BookOpen, Clock, Target } from "lucide-react";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useGrades } from "@/hooks/useGrades";
-import { useTests } from "@/hooks/useTests";
 import GradeDisplay from "./GradeDisplay";
 
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
   const { progress } = useUserProgress();
-  const { userProfile, currentGrade } = useGrades();
-  const { attempts } = useTests();
+  const { userProfile } = useGrades();
 
   const totalLessons = lessons?.length || 0;
-  const totalModules = modules?.length || 0;
-  
-  // Calculate completed modules - count unique modules that have test attempts
-  const completedModules = Math.min(currentGrade?.completedModules || 0, totalModules);
-  
-  // Get lessons for completed modules
-  const completedLessons = modules && lessons ? 
-    modules.slice(0, completedModules).reduce((total, module) => {
-      const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
-      return total + moduleLessons.length;
-    }, 0) : 0;
+  const completedLessons = progress?.filter(p => p.completed).length || 0;
+  const completedModules = modules?.filter(module => {
+    const moduleLessons = lessons?.filter(lesson => lesson.module_id === module.id) || [];
+    const moduleCompletedLessons = moduleLessons.filter(lesson => 
+      progress?.some(p => p.lesson_id === lesson.id && p.completed)
+    );
+    return moduleLessons.length > 0 && moduleCompletedLessons.length === moduleLessons.length;
+  }).length || 0;
 
   const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
-
-  // Use current grade for display, fallback to profile grade
-  const displayGrade = currentGrade?.grade || userProfile?.overall_grade;
-
-  // Calculate time invested based on completed lessons (15 min per lesson)
-  const timeInvested = completedLessons * 15;
 
   const stats = [
     {
@@ -46,23 +35,23 @@ const DashboardStats = () => {
     {
       title: "Modules Completed",
       value: completedModules,
-      description: `${completedModules} of ${totalModules} modules`,
+      description: `${completedModules} of ${modules?.length || 0} modules`,
       icon: BookOpen,
-      progress: totalModules > 0 ? (completedModules / totalModules) * 100 : 0,
+      progress: modules?.length ? (completedModules / modules.length) * 100 : 0,
     },
     {
       title: "Current Grade",
-      value: displayGrade ? `${displayGrade.toFixed(1)}%` : "N/A",
+      value: userProfile?.overall_grade ? `${userProfile.overall_grade.toFixed(1)}%` : "N/A",
       description: userProfile?.certificate_earned ? "Certificate Earned!" : "Keep learning!",
       icon: Trophy,
-      progress: displayGrade || 0,
+      progress: userProfile?.overall_grade || 0,
     },
     {
       title: "Time Invested",
-      value: `${timeInvested}min`,
+      value: `${completedLessons * 15}min`,
       description: "Estimated learning time",
       icon: Clock,
-      progress: Math.min((timeInvested / 300) * 100, 100),
+      progress: Math.min((completedLessons * 15) / 300 * 100, 100),
     },
   ];
 

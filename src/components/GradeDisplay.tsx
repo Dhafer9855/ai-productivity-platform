@@ -1,12 +1,11 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Award, Star, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Trophy, Award, Star } from "lucide-react";
 import { useGrades } from "@/hooks/useGrades";
 
 const GradeDisplay = () => {
-  const { userProfile, currentGrade, calculateOverallGrade, isCalculatingGrade } = useGrades();
+  const { userProfile, currentGrade } = useGrades();
 
   const getGradeColor = (grade: number) => {
     if (grade >= 90) return "text-green-600";
@@ -33,15 +32,6 @@ const GradeDisplay = () => {
         <CardTitle className="flex items-center gap-2">
           <Star className="h-5 w-5" />
           Your Grade
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => calculateOverallGrade()}
-            disabled={isCalculatingGrade}
-            className="ml-auto"
-          >
-            <RefreshCw className={`h-4 w-4 ${isCalculatingGrade ? 'animate-spin' : ''}`} />
-          </Button>
         </CardTitle>
         <CardDescription>Overall course performance</CardDescription>
       </CardHeader>
