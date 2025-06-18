@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import PaymentButton from "@/components/PaymentButton";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Clock, Target, Trophy, BookOpen, Users, CheckCircle, Play, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -191,7 +192,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex justify-center">
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
                 size="lg" 
                 className="px-8 py-4 text-lg font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -200,6 +201,7 @@ const Index = () => {
                 <ButtonIcon className="h-5 w-5 mr-2" />
                 {getButtonText()}
               </Button>
+              <PaymentButton />
             </div>
           </div>
         </section>
@@ -287,7 +289,7 @@ const Index = () => {
             <p className="text-xl text-blue-100 mb-8">
               Join thousands of professionals who have already mastered AI for workplace efficiency.
             </p>
-            <div className="flex justify-center">
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
                 size="lg" 
                 variant="secondary"
@@ -296,6 +298,7 @@ const Index = () => {
               >
                 {getButtonText()}
               </Button>
+              <PaymentButton />
             </div>
           </div>
         </section>
