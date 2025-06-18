@@ -9,7 +9,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import LessonView from "./pages/LessonView";
-import Practice from "./pages/Practice";
 import ProjectSubmission from "./pages/ProjectSubmission";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCanceled from "./pages/PaymentCanceled";
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lesson/:moduleId/:lessonId" element={<LessonView />} />
-            <Route path="/practice/:moduleId/:lessonId" element={<Practice />} />
             <Route path="/project-submission" element={<ProjectSubmission />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
