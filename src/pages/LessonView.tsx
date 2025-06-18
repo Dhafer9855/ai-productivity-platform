@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Clock, CheckCircle, FileText } from "lucide-react";
 import LessonContent from "@/components/lesson/LessonContent";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
 const LessonView = () => {
@@ -97,6 +98,11 @@ const LessonView = () => {
     },
     enabled: !!user?.id && !!lessonId,
   });
+
+  // Reset local completion state when lesson changes
+  useEffect(() => {
+    setIsCompleted(false);
+  }, [lessonId]);
 
   const markAsCompletedMutation = useMutation({
     mutationFn: async () => {
@@ -196,7 +202,16 @@ const LessonView = () => {
     );
   }
 
-  const isLessonCompleted = progress?.completed || isCompleted;
+  // Only consider lesson completed if it's actually marked as completed in the database OR locally completed
+  const isLessonCompleted = (progress?.completed === true) || isCompleted;
+
+  console.log('Lesson completion check:', {
+    lessonId,
+    progressCompleted: progress?.completed,
+    isCompleted,
+    isLessonCompleted,
+    progress
+  });
 
   const lessonWithDescription = {
     ...lesson,
