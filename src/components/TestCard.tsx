@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,10 @@ import { Progress } from "@/components/ui/progress";
 import { ClipboardList, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useTests } from "@/hooks/useTests";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface Test {
   id: number;
@@ -41,6 +46,84 @@ const TestCard = ({ test, attempt }: TestCardProps) => {
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
   const { getTestQuestions } = useTests();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const submitTestMutation = useMutation({
+    mutationFn: async ({ finalScore, totalQuestions }: { finalScore: number; totalQuestions: number }) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Submitting test attempt:', { 
+        testId: test.id, 
+        userId: user.id, 
+        score: finalScore, 
+        totalQuestions,
+        moduleId: test.module_id
+      });
+
+      // Insert test attempt
+      const { data: attemptData, error: attemptError } = await supabase
+        .from('test_attempts')
+        .insert({
+          test_id: test.id,
+          user_id: user.id,
+          answers,
+          score: finalScore,
+          total_questions: totalQuestions,
+        })
+        .select()
+        .single();
+
+      if (attemptError) {
+        console.error('Test attempt insertion error:', attemptError);
+        throw new Error(`Failed to save test attempt: ${attemptError.message}`);
+      }
+
+      console.log('Test attempt saved successfully:', attemptData);
+
+      // Update user progress with test score
+      const { error: progressError } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          module_id: test.module_id,
+          test_score: finalScore,
+        }, {
+          onConflict: 'user_id,module_id'
+        });
+
+      if (progressError) {
+        console.error('Progress update error:', progressError);
+        throw new Error(`Failed to update progress: ${progressError.message}`);
+      }
+
+      console.log('Progress updated successfully');
+      return finalScore;
+    },
+    onSuccess: (finalScore) => {
+      console.log('Test submission successful, invalidating queries');
+      queryClient.invalidateQueries({ queryKey: ['test_attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['current_grade'] });
+      queryClient.invalidateQueries({ queryKey: ['module-progress'] });
+      
+      toast({
+        title: "Test Completed Successfully!",
+        description: `You scored ${finalScore}%`,
+      });
+    },
+    onError: (error: any) => {
+      console.error('Test submission error:', error);
+      toast({
+        title: "Test Submission Failed",
+        description: error.message || "There was an error submitting your test. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const startTest = async () => {
     try {
@@ -88,8 +171,11 @@ const TestCard = ({ test, attempt }: TestCardProps) => {
     setIsCompleted(true);
     setShowResults(true);
 
-    // Note: Test submission is handled by the dedicated TestView page
-    console.log('Test completed with score:', finalScore);
+    // Submit to database
+    submitTestMutation.mutate({
+      finalScore,
+      totalQuestions: questions.length,
+    });
   };
 
   const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
