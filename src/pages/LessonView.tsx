@@ -108,20 +108,20 @@ const LessonView = () => {
     mutationFn: async () => {
       if (!user?.id || !lessonId) throw new Error('Missing user or lesson ID');
 
-      // First, try to get existing progress for this module
+      // Check if progress record already exists for this specific lesson
       const { data: existingProgress } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
+        .eq('lesson_id', parseInt(lessonId))
         .eq('module_id', parseInt(moduleId!))
         .maybeSingle();
 
       if (existingProgress) {
-        // Update existing progress to mark this lesson as complete
+        // Update existing progress record for this specific lesson
         const { error } = await supabase
           .from('user_progress')
           .update({
-            lesson_id: parseInt(lessonId),
             completed: true,
             completed_at: new Date().toISOString()
           })
@@ -129,7 +129,7 @@ const LessonView = () => {
 
         if (error) throw error;
       } else {
-        // Create new progress record
+        // Create new progress record for this specific lesson
         const { error } = await supabase
           .from('user_progress')
           .insert({
