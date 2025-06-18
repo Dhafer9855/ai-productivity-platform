@@ -22,9 +22,27 @@ const CourseContent = () => {
   // Transform data for ModuleCard compatibility
   const moduleData = modules.map(module => {
     const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
-    const moduleProgress = progress?.filter(p => p.module_id === module.id) || [];
-    const completedLessons = moduleProgress.filter(p => p.completed).length;
+    
+    // Fix progress calculation - count unique completed lessons for this module
+    const completedLessonIds = new Set(
+      progress?.filter(p => 
+        p.module_id === module.id && 
+        p.completed === true && 
+        p.lesson_id !== null
+      ).map(p => p.lesson_id) || []
+    );
+    
+    const completedLessons = completedLessonIds.size;
     const progressPercentage = moduleLessons.length > 0 ? (completedLessons / moduleLessons.length) * 100 : 0;
+
+    console.log(`Module ${module.id} progress calculation:`, {
+      moduleId: module.id,
+      moduleLessons: moduleLessons.length,
+      completedLessonIds: Array.from(completedLessonIds),
+      completedLessons,
+      progressPercentage,
+      allProgress: progress?.filter(p => p.module_id === module.id)
+    });
 
     // For module 7, show assignment instead of lessons
     if (module.id === 7) {
@@ -48,7 +66,7 @@ const CourseContent = () => {
         title: lesson.title,
         type: "video" as const,
         duration: "15 min",
-        completed: moduleProgress.some(p => p.lesson_id === lesson.id && p.completed),
+        completed: completedLessonIds.has(lesson.id),
       })),
       progress: progressPercentage,
       estimatedTime: `${moduleLessons.length * 15} min`,
