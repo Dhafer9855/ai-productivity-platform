@@ -53,7 +53,7 @@ export const useGrades = () => {
         return null;
       }
 
-      // Calculate grade as percentage for each test (score/total_questions is already a ratio)
+      // Calculate grade - score is already the number of correct answers
       const testScores = testAttempts.map(attempt => {
         const percentage = (attempt.score / attempt.total_questions) * 100;
         console.log(`Test ${attempt.test_id}: ${attempt.score}/${attempt.total_questions} = ${percentage}%`);
@@ -99,7 +99,7 @@ export const useGrades = () => {
         return null;
       }
 
-      // Calculate grade as percentage for each test
+      // Calculate grade - score is already the number of correct answers
       const testScores = testAttempts.map(attempt => {
         return (attempt.score / attempt.total_questions) * 100;
       });

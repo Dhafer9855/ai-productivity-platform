@@ -16,11 +16,15 @@ const DashboardStats = () => {
 
   const totalLessons = lessons?.length || 0;
   
-  // Calculate completed lessons across all modules based on progress records
-  const completedLessons = progress?.filter(p => p.completed).length || 0;
-  
-  // Use actual test attempts for completed modules
+  // Calculate completed lessons - for modules with completed tests, count all lessons as completed
   const completedModules = currentGrade?.completedModules || 0;
+  
+  // Get lessons for completed modules
+  const completedLessons = modules && lessons ? 
+    modules.slice(0, completedModules).reduce((total, module) => {
+      const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
+      return total + moduleLessons.length;
+    }, 0) : 0;
 
   const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
