@@ -28,39 +28,34 @@ export const useGrades = () => {
   const calculateOverallGrade = async () => {
     if (!user) return;
 
-    // Get all module scores
+    // Get all module test scores
     const { data: progress, error } = await supabase
       .from('user_progress')
       .select('module_id, test_score, assignment_score')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .not('test_score', 'is', null); // Only include modules with test scores
 
     if (error) {
       console.error('Error fetching progress:', error);
       return;
     }
 
-    // Calculate average scores
-    const moduleScores = progress?.reduce((acc, curr) => {
-      if (!acc[curr.module_id]) {
-        acc[curr.module_id] = { test: 0, assignment: 0, count: 0 };
-      }
-      if (curr.test_score) acc[curr.module_id].test = curr.test_score;
-      if (curr.assignment_score) acc[curr.module_id].assignment = curr.assignment_score;
-      acc[curr.module_id].count++;
-      return acc;
-    }, {} as Record<number, { test: number; assignment: number; count: number }>);
+    if (!progress || progress.length === 0) {
+      console.log('No test scores found');
+      return;
+    }
 
-    if (!moduleScores) return;
+    // Calculate average test scores
+    const testScores = progress
+      .filter(p => p.test_score !== null)
+      .map(p => p.test_score);
 
-    // Calculate overall grade (average of all module scores)
-    const moduleAverages = Object.values(moduleScores).map(module => {
-      return (module.test + module.assignment) / 2;
-    });
+    if (testScores.length === 0) return;
 
-    const overallGrade = moduleAverages.reduce((sum, score) => sum + score, 0) / moduleAverages.length;
+    const overallGrade = testScores.reduce((sum, score) => sum + score, 0) / testScores.length;
 
-    // Check if eligible for certificate (80% in all modules)
-    const eligibleForCertificate = moduleAverages.every(score => score >= 80) && moduleAverages.length >= 7;
+    // Check if eligible for certificate (80% average and completed at least 7 modules)
+    const eligibleForCertificate = overallGrade >= 80 && testScores.length >= 7;
 
     // Update user profile
     const updates: any = { overall_grade: overallGrade };

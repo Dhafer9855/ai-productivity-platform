@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +7,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Clock, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, CheckCircle, FileText } from "lucide-react";
 import LessonContent from "@/components/lesson/LessonContent";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -43,6 +42,22 @@ const LessonView = () => {
         .select('*')
         .eq('module_id', parseInt(moduleId!))
         .order('order', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!moduleId,
+  });
+
+  // Check if there's a test for this module
+  const { data: moduleTest } = useQuery({
+    queryKey: ['module-test', moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tests')
+        .select('*')
+        .eq('module_id', parseInt(moduleId!))
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -112,6 +127,7 @@ const LessonView = () => {
   
   const isLastLesson = !nextLesson;
   const isFirstLesson = !previousLesson;
+  const isLastLessonOfModule = isLastLesson && moduleTest; // Only show test if there's a test for this module
 
   const handleNextLesson = () => {
     if (nextLesson) {
@@ -122,6 +138,12 @@ const LessonView = () => {
   const handlePreviousLesson = () => {
     if (previousLesson) {
       navigate(`/lesson/${moduleId}/${previousLesson.id}`);
+    }
+  };
+
+  const handleStartTest = () => {
+    if (moduleTest) {
+      navigate(`/test/${moduleTest.id}`);
     }
   };
 
@@ -232,7 +254,10 @@ const LessonView = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Ready to continue?</h3>
                   <p className="text-gray-600 text-sm">
-                    Mark this lesson as complete to track your progress.
+                    {isLastLessonOfModule 
+                      ? "Complete this lesson to take the module test." 
+                      : "Mark this lesson as complete to track your progress."
+                    }
                   </p>
                 </div>
                 
@@ -247,16 +272,37 @@ const LessonView = () => {
                     </Button>
                   )}
                   
-                  <Button 
-                    variant="outline" 
-                    onClick={handleNextLesson}
-                    disabled={isLastLesson}
-                  >
-                    {isLastLesson ? "Course Complete" : "Next Lesson"}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
+                  {!isLastLessonOfModule && (
+                    <Button 
+                      variant="outline" 
+                      onClick={handleNextLesson}
+                      disabled={isLastLesson}
+                    >
+                      {isLastLesson ? "Course Complete" : "Next Lesson"}
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  )}
                 </div>
               </div>
+
+              {/* Module Test Section - Only show if this is the last lesson of the module and lesson is completed */}
+              {isLastLessonOfModule && isLessonCompleted && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold mb-2">Module {lesson.modules.order} Complete!</h3>
+                    <p className="text-gray-600 mb-4">
+                      Ready to test your knowledge? Take the module test to earn your grade.
+                    </p>
+                    <Button 
+                      onClick={handleStartTest}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Start Module {lesson.modules.order} Test
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </main>
