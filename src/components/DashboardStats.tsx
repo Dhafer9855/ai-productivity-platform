@@ -10,7 +10,7 @@ import GradeDisplay from "./GradeDisplay";
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
   const { progress } = useUserProgress();
-  const { userProfile } = useGrades();
+  const { userProfile, currentGrade } = useGrades();
 
   const totalLessons = lessons?.length || 0;
   const completedLessons = progress?.filter(p => p.completed).length || 0;
@@ -23,6 +23,9 @@ const DashboardStats = () => {
   }).length || 0;
 
   const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
+  // Use current grade for display, fallback to profile grade
+  const displayGrade = currentGrade?.grade || userProfile?.overall_grade;
 
   const stats = [
     {
@@ -41,10 +44,10 @@ const DashboardStats = () => {
     },
     {
       title: "Current Grade",
-      value: userProfile?.overall_grade ? `${userProfile.overall_grade.toFixed(1)}%` : "N/A",
+      value: displayGrade ? `${displayGrade.toFixed(1)}%` : "N/A",
       description: userProfile?.certificate_earned ? "Certificate Earned!" : "Keep learning!",
       icon: Trophy,
-      progress: userProfile?.overall_grade || 0,
+      progress: displayGrade || 0,
     },
     {
       title: "Time Invested",

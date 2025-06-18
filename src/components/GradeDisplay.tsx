@@ -1,11 +1,12 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Award, Star } from "lucide-react";
+import { Trophy, Award, Star, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useGrades } from "@/hooks/useGrades";
 
 const GradeDisplay = () => {
-  const { userProfile, currentGrade } = useGrades();
+  const { userProfile, currentGrade, calculateOverallGrade, isCalculatingGrade } = useGrades();
 
   const getGradeColor = (grade: number) => {
     if (grade >= 90) return "text-green-600";
@@ -32,6 +33,15 @@ const GradeDisplay = () => {
         <CardTitle className="flex items-center gap-2">
           <Star className="h-5 w-5" />
           Your Grade
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => calculateOverallGrade()}
+            disabled={isCalculatingGrade}
+            className="ml-auto"
+          >
+            <RefreshCw className={`h-4 w-4 ${isCalculatingGrade ? 'animate-spin' : ''}`} />
+          </Button>
         </CardTitle>
         <CardDescription>Overall course performance</CardDescription>
       </CardHeader>
@@ -63,7 +73,7 @@ const GradeDisplay = () => {
               <div>
                 <div className="font-medium text-yellow-800">Certificate Earned!</div>
                 <div className="text-sm text-yellow-600">
-                  Issued on {new Date(userProfile.certificate_issued_at!).toLocaleDateString()}
+                  Issued on {new Date(userProfile.certificate_issued_at!).toLocalDateString()}
                 </div>
               </div>
             </div>
