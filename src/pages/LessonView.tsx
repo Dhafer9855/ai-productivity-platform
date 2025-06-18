@@ -165,6 +165,13 @@ const LessonView = () => {
     }
   };
 
+  const handleCompleteModule = () => {
+    toast({
+      title: "Module Completed!",
+      description: "Congratulations! You've completed all lessons in this module.",
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 flex items-center justify-center">
@@ -277,6 +284,7 @@ const LessonView = () => {
                     <Button 
                       onClick={() => markAsCompletedMutation.mutate()}
                       disabled={markAsCompletedMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       {markAsCompletedMutation.isPending ? "Marking..." : "Mark as Complete"}
@@ -296,20 +304,15 @@ const LessonView = () => {
                   {/* Show Complete Module button if it's the last lesson and current lesson is completed */}
                   {isLastLesson && isLessonCompleted && (
                     <Button 
-                      onClick={() => {
-                        toast({
-                          title: "Module Completed!",
-                          description: "Congratulations! You've completed all lessons in this module.",
-                        });
-                      }}
-                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleCompleteModule}
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Complete Module
                     </Button>
                   )}
 
-                  {/* Show disabled buttons with explanatory text if lesson is not completed */}
+                  {/* Show disabled Next Lesson button if lesson is not completed and it's not the last lesson */}
                   {!isLastLesson && !isLessonCompleted && (
                     <Button 
                       variant="outline"
@@ -321,6 +324,7 @@ const LessonView = () => {
                     </Button>
                   )}
 
+                  {/* Show disabled Complete Module button if it's the last lesson but lesson is not completed */}
                   {isLastLesson && !isLessonCompleted && (
                     <Button 
                       variant="outline"
@@ -344,7 +348,7 @@ const LessonView = () => {
                     </p>
                     <Button 
                       onClick={handleStartTest}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-purple-600 hover:bg-purple-700"
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Start Module {lesson.modules.order} Test
