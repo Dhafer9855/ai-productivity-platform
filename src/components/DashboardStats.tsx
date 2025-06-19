@@ -6,6 +6,7 @@ import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useGrades } from "@/hooks/useGrades";
 import GradeDisplay from "./GradeDisplay";
+import ProgressMigrationButton from "./ProgressMigrationButton";
 
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
@@ -106,7 +107,10 @@ const DashboardStats = () => {
         );
       })}
       
-      <GradeDisplay />
+      <div className="flex flex-col gap-4">
+        <GradeDisplay />
+        <ProgressMigrationButton />
+      </div>
     </div>
   );
 };
