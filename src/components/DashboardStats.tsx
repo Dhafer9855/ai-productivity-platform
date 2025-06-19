@@ -14,20 +14,22 @@ const DashboardStats = () => {
 
   const totalLessons = lessons?.length || 0;
   
-  // Count completed lessons properly - each lesson should have its own progress record
-  const completedLessonsProgress = progress?.filter(p => 
-    p.completed && 
-    p.lesson_id !== null && 
-    p.lesson_id !== undefined
-  ) || [];
+  // Count completed lessons - look for unique lesson IDs that are marked as completed
+  const completedLessonsSet = new Set();
+  progress?.forEach(p => {
+    if (p.completed && p.lesson_id) {
+      completedLessonsSet.add(p.lesson_id);
+    }
+  });
   
-  const completedLessons = completedLessonsProgress.length;
+  const completedLessons = completedLessonsSet.size;
   
   console.log('Dashboard stats calculation:', {
     totalLessons,
     completedLessons,
     progressRecords: progress?.length,
-    completedLessonsProgress
+    uniqueCompletedLessons: Array.from(completedLessonsSet),
+    allProgressData: progress
   });
 
   // Count completed modules (modules where all lessons are completed)
