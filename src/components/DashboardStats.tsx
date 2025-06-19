@@ -13,7 +13,24 @@ const DashboardStats = () => {
   const { userProfile } = useGrades();
 
   const totalLessons = lessons?.length || 0;
-  const completedLessons = progress?.filter(p => p.completed).length || 0;
+  
+  // Count completed lessons properly - each lesson should have its own progress record
+  const completedLessonsProgress = progress?.filter(p => 
+    p.completed && 
+    p.lesson_id !== null && 
+    p.lesson_id !== undefined
+  ) || [];
+  
+  const completedLessons = completedLessonsProgress.length;
+  
+  console.log('Dashboard stats calculation:', {
+    totalLessons,
+    completedLessons,
+    progressRecords: progress?.length,
+    completedLessonsProgress
+  });
+
+  // Count completed modules (modules where all lessons are completed)
   const completedModules = modules?.filter(module => {
     const moduleLessons = lessons?.filter(lesson => lesson.module_id === module.id) || [];
     const moduleCompletedLessons = moduleLessons.filter(lesson => 
