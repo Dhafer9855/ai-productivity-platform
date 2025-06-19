@@ -20,7 +20,8 @@ export const useUserProgress = () => {
           lessons:lesson_id(id, title, module_id, order),
           modules:module_id(id, title)
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('completed', true); // Only get completed lessons
 
       if (error) {
         console.error('Error fetching user progress:', error);
@@ -39,44 +40,67 @@ export const useUserProgress = () => {
 
       console.log('Marking lesson complete:', { lessonId, moduleId, userId: user.id });
 
-      // Check if there's already a progress record for this specific lesson
-      const { data: existingLessonProgress } = await supabase
-        .from('user_progress')
+      // Get all lessons in this module to find which ones should be marked complete
+      const { data: allLessons, error: lessonsError } = await supabase
+        .from('lessons')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('lesson_id', lessonId)
         .eq('module_id', moduleId)
-        .maybeSingle();
+        .order('order');
 
-      if (existingLessonProgress) {
-        // Update existing lesson progress
-        const { error } = await supabase
+      if (lessonsError) {
+        console.error('Error fetching lessons:', lessonsError);
+        throw lessonsError;
+      }
+
+      // Find the current lesson being completed
+      const currentLesson = allLessons?.find(l => l.id === lessonId);
+      if (!currentLesson) {
+        throw new Error('Lesson not found');
+      }
+
+      // Mark all lessons up to and including the current lesson as complete
+      const lessonsToComplete = allLessons?.filter(l => l.order <= currentLesson.order) || [];
+
+      for (const lesson of lessonsToComplete) {
+        // Check if progress record already exists for this specific lesson
+        const { data: existingProgress } = await supabase
           .from('user_progress')
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', existingLessonProgress.id);
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('lesson_id', lesson.id)
+          .eq('module_id', moduleId)
+          .maybeSingle();
 
-        if (error) {
-          console.error('Error updating lesson progress:', error);
-          throw error;
-        }
-      } else {
-        // Create new progress record for this specific lesson
-        const { error } = await supabase
-          .from('user_progress')
-          .insert({
-            user_id: user.id,
-            lesson_id: lessonId,
-            module_id: moduleId,
-            completed: true,
-            completed_at: new Date().toISOString()
-          });
+        if (existingProgress) {
+          // Update existing progress
+          const { error } = await supabase
+            .from('user_progress')
+            .update({
+              completed: true,
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', existingProgress.id);
 
-        if (error) {
-          console.error('Error creating lesson progress:', error);
-          throw error;
+          if (error) {
+            console.error('Error updating lesson progress:', error);
+            throw error;
+          }
+        } else {
+          // Create new progress record for this specific lesson
+          const { error } = await supabase
+            .from('user_progress')
+            .insert({
+              user_id: user.id,
+              lesson_id: lesson.id,
+              module_id: moduleId,
+              completed: true,
+              completed_at: new Date().toISOString()
+            });
+
+          if (error) {
+            console.error('Error creating lesson progress:', error);
+            throw error;
+          }
         }
       }
     },

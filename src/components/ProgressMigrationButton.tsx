@@ -33,10 +33,18 @@ const ProgressMigrationButton = () => {
 
       if (!currentProgress || !allLessons) return;
 
-      // For each completed module, create individual lesson progress records
+      // Clear existing progress and recreate individual lesson progress
+      await supabase
+        .from('user_progress')
+        .delete()
+        .eq('user_id', user.id);
+
+      // For each unique module that had progress, recreate individual lesson records
+      const completedModules = new Set();
+      
+      // Find the highest completed lesson in each module
       for (const progressRecord of currentProgress) {
         if (progressRecord.completed && progressRecord.lesson_id) {
-          // Find all lessons in this module up to and including the completed lesson
           const moduleId = progressRecord.module_id;
           const completedLessonId = progressRecord.lesson_id;
           
@@ -48,29 +56,18 @@ const ProgressMigrationButton = () => {
             const lessonsToComplete = moduleLessons.filter(l => l.order <= completedLesson.order);
             
             for (const lesson of lessonsToComplete) {
-              // Check if progress record already exists for this lesson
-              const { data: existingProgress } = await supabase
+              // Create new progress record for each individual lesson
+              await supabase
                 .from('user_progress')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('lesson_id', lesson.id)
-                .eq('module_id', moduleId)
-                .maybeSingle();
-
-              if (!existingProgress) {
-                // Create new progress record
-                await supabase
-                  .from('user_progress')
-                  .insert({
-                    user_id: user.id,
-                    lesson_id: lesson.id,
-                    module_id: moduleId,
-                    completed: true,
-                    completed_at: progressRecord.completed_at || new Date().toISOString()
-                  });
-                
-                console.log(`Created progress record for lesson ${lesson.id} in module ${moduleId}`);
-              }
+                .insert({
+                  user_id: user.id,
+                  lesson_id: lesson.id,
+                  module_id: moduleId,
+                  completed: true,
+                  completed_at: progressRecord.completed_at || new Date().toISOString()
+                });
+              
+              console.log(`Created progress record for lesson ${lesson.id} in module ${moduleId}`);
             }
           }
         }
