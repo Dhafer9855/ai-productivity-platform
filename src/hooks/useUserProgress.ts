@@ -21,15 +21,30 @@ export const useUserProgress = () => {
           modules:module_id(id, title)
         `)
         .eq('user_id', user.id)
-        .eq('completed', true); // Only get completed lessons
+        .eq('completed', true)
+        .not('lesson_id', 'is', null); // Only get records with specific lesson_id
 
       if (error) {
         console.error('Error fetching user progress:', error);
         throw error;
       }
       
-      console.log('Raw progress data:', data);
-      return data;
+      console.log('Raw progress data from DB:', data);
+      console.log('Number of completed lesson records:', data?.length);
+      
+      // Group by lesson_id to avoid duplicates
+      const uniqueLessons = data?.reduce((acc, current) => {
+        const existingLesson = acc.find(item => item.lesson_id === current.lesson_id);
+        if (!existingLesson) {
+          acc.push(current);
+        }
+        return acc;
+      }, [] as typeof data) || [];
+      
+      console.log('Unique lesson progress records:', uniqueLessons);
+      console.log('Final count of unique lessons:', uniqueLessons.length);
+      
+      return uniqueLessons;
     },
     enabled: !!user,
   });
@@ -58,8 +73,12 @@ export const useUserProgress = () => {
         throw new Error('Lesson not found');
       }
 
+      console.log('Current lesson being completed:', currentLesson);
+      console.log('All lessons in module:', allLessons);
+
       // Mark all lessons up to and including the current lesson as complete
       const lessonsToComplete = allLessons?.filter(l => l.order <= currentLesson.order) || [];
+      console.log('Lessons to mark complete:', lessonsToComplete);
 
       for (const lesson of lessonsToComplete) {
         // Check if progress record already exists for this specific lesson
@@ -72,6 +91,7 @@ export const useUserProgress = () => {
           .maybeSingle();
 
         if (existingProgress) {
+          console.log(`Updating existing progress for lesson ${lesson.id}`);
           // Update existing progress
           const { error } = await supabase
             .from('user_progress')
@@ -86,6 +106,7 @@ export const useUserProgress = () => {
             throw error;
           }
         } else {
+          console.log(`Creating new progress record for lesson ${lesson.id}`);
           // Create new progress record for this specific lesson
           const { error } = await supabase
             .from('user_progress')

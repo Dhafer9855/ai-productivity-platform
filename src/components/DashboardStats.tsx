@@ -17,11 +17,10 @@ const DashboardStats = () => {
   
   console.log('=== DASHBOARD STATS DEBUG ===');
   console.log('Total lessons in database:', totalLessons);
-  console.log('Progress data:', progress);
-  console.log('Raw progress length:', progress?.length);
+  console.log('Progress data from hook:', progress);
+  console.log('Progress array length:', progress?.length);
   
-  // Count completed lessons directly from progress array
-  // Each progress record represents one completed lesson
+  // Count completed lessons - each progress record now represents one completed lesson
   const completedLessons = progress?.length || 0;
   
   console.log('=== FINAL CALCULATION ===');
@@ -35,7 +34,15 @@ const DashboardStats = () => {
     const moduleCompletedLessons = moduleLessons.filter(lesson => 
       progress?.some(p => p.lesson_id === lesson.id)
     );
-    return moduleLessons.length > 0 && moduleCompletedLessons.length === moduleLessons.length;
+    const isModuleComplete = moduleLessons.length > 0 && moduleCompletedLessons.length === moduleLessons.length;
+    
+    console.log(`Module ${module.id} completion check:`, {
+      moduleLessons: moduleLessons.length,
+      completedLessons: moduleCompletedLessons.length,
+      isComplete: isModuleComplete
+    });
+    
+    return isModuleComplete;
   }).length || 0;
 
   const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;

@@ -15,13 +15,15 @@ const ProgressMigrationButton = () => {
     
     setIsLoading(true);
     try {
+      console.log('Starting progress migration...');
+      
       // Get current progress records
       const { data: currentProgress } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id);
 
-      console.log('Current progress:', currentProgress);
+      console.log('Current progress before migration:', currentProgress);
 
       // Get all lessons to know which ones should be marked as complete
       const { data: allLessons } = await supabase
@@ -33,16 +35,15 @@ const ProgressMigrationButton = () => {
 
       if (!currentProgress || !allLessons) return;
 
-      // Clear existing progress and recreate individual lesson progress
+      // Clear ALL existing progress and recreate individual lesson progress
       await supabase
         .from('user_progress')
         .delete()
         .eq('user_id', user.id);
 
-      // For each unique module that had progress, recreate individual lesson records
-      const completedModules = new Set();
-      
-      // Find the highest completed lesson in each module
+      console.log('Cleared all existing progress');
+
+      // For each progress record that had a specific lesson_id, recreate individual lesson records
       for (const progressRecord of currentProgress) {
         if (progressRecord.completed && progressRecord.lesson_id) {
           const moduleId = progressRecord.module_id;
@@ -52,12 +53,14 @@ const ProgressMigrationButton = () => {
           const completedLesson = moduleLessons.find(l => l.id === completedLessonId);
           
           if (completedLesson) {
+            console.log(`Processing module ${moduleId}, completed lesson ${completedLessonId} (order ${completedLesson.order})`);
+            
             // Mark all lessons up to the completed lesson as complete
             const lessonsToComplete = moduleLessons.filter(l => l.order <= completedLesson.order);
             
             for (const lesson of lessonsToComplete) {
               // Create new progress record for each individual lesson
-              await supabase
+              const { error } = await supabase
                 .from('user_progress')
                 .insert({
                   user_id: user.id,
@@ -67,15 +70,30 @@ const ProgressMigrationButton = () => {
                   completed_at: progressRecord.completed_at || new Date().toISOString()
                 });
               
-              console.log(`Created progress record for lesson ${lesson.id} in module ${moduleId}`);
+              if (error) {
+                console.error(`Error creating progress for lesson ${lesson.id}:`, error);
+              } else {
+                console.log(`Created progress record for lesson ${lesson.id} (order ${lesson.order}) in module ${moduleId}`);
+              }
             }
           }
         }
       }
 
+      // Verify the migration
+      const { data: newProgress } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        .not('lesson_id', 'is', null);
+
+      console.log('Progress after migration:', newProgress);
+      console.log('Total lesson progress records created:', newProgress?.length || 0);
+
       toast({
         title: "Progress Migration Complete",
-        description: "Your lesson progress has been updated to reflect individual lesson completions.",
+        description: `Successfully migrated to ${newProgress?.length || 0} individual lesson progress records.`,
       });
 
       // Refresh the page to see updated progress
