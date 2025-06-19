@@ -14,23 +14,36 @@ const DashboardStats = () => {
 
   const totalLessons = lessons?.length || 0;
   
+  console.log('=== DASHBOARD STATS DEBUG ===');
+  console.log('Total lessons in database:', totalLessons);
+  console.log('Progress data:', progress);
+  console.log('Raw progress length:', progress?.length);
+  
   // Count completed lessons - look for unique lesson IDs that are marked as completed
   const completedLessonsSet = new Set();
-  progress?.forEach(p => {
+  progress?.forEach((p, index) => {
+    console.log(`Progress record ${index}:`, {
+      id: p.id,
+      user_id: p.user_id,
+      lesson_id: p.lesson_id,
+      module_id: p.module_id,
+      completed: p.completed,
+      completed_at: p.completed_at
+    });
+    
     if (p.completed && p.lesson_id) {
       completedLessonsSet.add(p.lesson_id);
+      console.log(`Added lesson ${p.lesson_id} to completed set`);
     }
   });
   
   const completedLessons = completedLessonsSet.size;
   
-  console.log('Dashboard stats calculation:', {
-    totalLessons,
-    completedLessons,
-    progressRecords: progress?.length,
-    uniqueCompletedLessons: Array.from(completedLessonsSet),
-    allProgressData: progress
-  });
+  console.log('=== FINAL CALCULATION ===');
+  console.log('Unique completed lessons:', Array.from(completedLessonsSet));
+  console.log('Completed lessons count:', completedLessons);
+  console.log('Total lessons:', totalLessons);
+  console.log('Progress percentage:', totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0);
 
   // Count completed modules (modules where all lessons are completed)
   const completedModules = modules?.filter(module => {
