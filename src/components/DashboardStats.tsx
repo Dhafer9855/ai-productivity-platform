@@ -32,19 +32,21 @@ const DashboardStats = () => {
   }
   const completedLessonsCount = completedLessonIds.size;
 
-  // Count modules with progress (not necessarily completed)
+  // Count modules with any completed lessons
   const modulesWithProgress = new Set();
   if (progress && modules) {
     progress.forEach(p => {
-      if (p.module_id && p.completed) {
+      if (p.module_id && p.completed && p.lesson_id) { // Only count if there's a completed lesson
         modulesWithProgress.add(p.module_id);
       }
     });
   }
   const modulesWithProgressCount = modulesWithProgress.size;
 
-  console.log('=== MODULE COUNTING ===');
-  console.log('Modules with progress:', Array.from(modulesWithProgress));
+  console.log('=== LESSON & MODULE COUNTING ===');
+  console.log('Unique completed lesson IDs:', Array.from(completedLessonIds));
+  console.log('Completed lessons count:', completedLessonsCount);
+  console.log('Modules with completed lessons:', Array.from(modulesWithProgress));
   console.log('Modules with progress count:', modulesWithProgressCount);
   console.log('Total modules:', modules?.length || 0);
 
@@ -66,7 +68,7 @@ const DashboardStats = () => {
     {
       title: "Time Invested",
       value: `${completedLessonsCount * 15}min`,
-      description: "Estimated learning time",
+      description: `${completedLessonsCount} lessons completed`,
       icon: Clock,
       progress: Math.min((completedLessonsCount * 15) / 300 * 100, 100),
     },
