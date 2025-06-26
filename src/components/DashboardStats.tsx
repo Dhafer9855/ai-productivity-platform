@@ -17,59 +17,44 @@ const DashboardStats = () => {
   console.log('=== DASHBOARD STATS DEBUG ===');
   console.log('Total lessons in database:', totalLessons);
   console.log('Progress data from hook:', progress);
-  console.log('Raw progress records:', progress?.map(p => ({ lesson_id: p.lesson_id, module_id: p.module_id, completed: p.completed })));
+  console.log('Raw progress records:', progress?.map(p => ({ 
+    id: p.id,
+    lesson_id: p.lesson_id, 
+    module_id: p.module_id, 
+    completed: p.completed 
+  })));
   
-  // Count completed lessons - each progress record with completed=true represents a completed lesson
-  const completedLessonsCount = progress?.length || 0;
+  // Count completed lessons - get unique lesson IDs from progress records
+  const completedLessonIds = new Set();
+  if (progress) {
+    progress.forEach(p => {
+      if (p.lesson_id && p.completed) {
+        completedLessonIds.add(p.lesson_id);
+      }
+    });
+  }
+  const completedLessonsCount = completedLessonIds.size;
   
   console.log('=== LESSON COUNTING ===');
-  console.log('Completed lessons count (direct from progress array):', completedLessonsCount);
+  console.log('Unique completed lesson IDs:', Array.from(completedLessonIds));
+  console.log('Completed lessons count:', completedLessonsCount);
   console.log('Total lessons:', totalLessons);
   console.log('Progress percentage:', totalLessons > 0 ? (completedLessonsCount / totalLessons) * 100 : 0);
 
-  // Count completed modules - modules where the user has some progress
-  let completedModulesCount = 0;
-  
-  if (modules && lessons && progress) {
-    for (const module of modules) {
-      const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
-      const moduleProgressRecords = progress.filter(p => p.module_id === module.id);
-      
-      // A module is considered "completed" if user has completed at least one lesson in it
-      // and has completed all lessons up to their current progress
-      let isModuleComplete = false;
-      
-      if (moduleProgressRecords.length > 0 && moduleLessons.length > 0) {
-        // Find the highest lesson order completed in this module
-        const completedLessonIds = moduleProgressRecords.map(p => p.lesson_id).filter(Boolean);
-        const completedLessons = moduleLessons.filter(lesson => completedLessonIds.includes(lesson.id));
-        
-        if (completedLessons.length > 0) {
-          const maxCompletedOrder = Math.max(...completedLessons.map(l => l.order));
-          const expectedCompletedLessons = moduleLessons.filter(l => l.order <= maxCompletedOrder);
-          
-          // Module is complete if all lessons up to the max completed order are actually completed
-          isModuleComplete = expectedCompletedLessons.every(lesson => 
-            completedLessonIds.includes(lesson.id)
-          );
-        }
+  // Count modules with progress (not necessarily completed)
+  const modulesWithProgress = new Set();
+  if (progress && modules) {
+    progress.forEach(p => {
+      if (p.module_id && p.completed) {
+        modulesWithProgress.add(p.module_id);
       }
-      
-      if (isModuleComplete) {
-        completedModulesCount++;
-      }
-      
-      console.log(`Module ${module.id} (${module.title}) completion check:`, {
-        totalLessons: moduleLessons.length,
-        progressRecords: moduleProgressRecords.length,
-        isComplete: isModuleComplete,
-        completedLessonIds: moduleProgressRecords.map(p => p.lesson_id)
-      });
-    }
+    });
   }
+  const modulesWithProgressCount = modulesWithProgress.size;
 
   console.log('=== MODULE COUNTING ===');
-  console.log('Completed modules count:', completedModulesCount);
+  console.log('Modules with progress:', Array.from(modulesWithProgress));
+  console.log('Modules with progress count:', modulesWithProgressCount);
   console.log('Total modules:', modules?.length || 0);
 
   const overallProgress = totalLessons > 0 ? (completedLessonsCount / totalLessons) * 100 : 0;
@@ -83,11 +68,11 @@ const DashboardStats = () => {
       progress: overallProgress,
     },
     {
-      title: "Modules Completed",
-      value: completedModulesCount,
-      description: `${completedModulesCount} of ${modules?.length || 0} modules`,
+      title: "Modules Started",
+      value: modulesWithProgressCount,
+      description: `${modulesWithProgressCount} of ${modules?.length || 0} modules`,
       icon: BookOpen,
-      progress: modules?.length ? (completedModulesCount / modules.length) * 100 : 0,
+      progress: modules?.length ? (modulesWithProgressCount / modules.length) * 100 : 0,
     },
     {
       title: "Current Grade",
