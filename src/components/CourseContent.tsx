@@ -54,7 +54,7 @@ const CourseContent = () => {
       currentCompletedLesson: moduleProgressRecord?.lesson_id
     });
 
-    // Check if user has access to this module
+    // Check if user has access to this module (based on test completion now)
     const hasAccess = hasAccessToModule(module.id);
 
     // For module 7, show assignment instead of lessons
@@ -117,7 +117,7 @@ const CourseContent = () => {
                 lessons={module.lessons}
                 progress={module.progress}
                 estimatedTime={module.estimatedTime}
-                isLocked={module.isLocked || (index > 0 && moduleData[index - 1].progress < 100)}
+                isLocked={module.isLocked}
               />
             ))}
           </div>
