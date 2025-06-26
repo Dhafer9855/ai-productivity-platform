@@ -1,6 +1,7 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, BookOpen, Clock } from "lucide-react";
+import { Trophy, BookOpen, Clock, CheckCircle } from "lucide-react";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useGrades } from "@/hooks/useGrades";
@@ -55,8 +56,12 @@ const DashboardStats = () => {
   }
   const modulesWithProgressCount = modulesWithProgress.size;
 
+  // Calculate total lessons across all modules (should be 35)
+  const totalLessons = lessons?.length || 0;
+
   console.log('=== LESSON & MODULE COUNTING ===');
   console.log('Total completed lessons (with progression logic):', totalCompletedLessons);
+  console.log('Total lessons in course:', totalLessons);
   console.log('Modules with completed lessons:', Array.from(modulesWithProgress));
   console.log('Modules with progress count:', modulesWithProgressCount);
   console.log('Total modules:', modules?.length || 0);
@@ -69,6 +74,13 @@ const DashboardStats = () => {
   const gradeProgress = currentGrade?.completedModules > 0 ? currentGrade.grade : 0;
 
   const stats = [
+    {
+      title: "Overall Progress",
+      value: `${totalCompletedLessons}/${totalLessons}`,
+      description: `${totalLessons > 0 ? Math.round((totalCompletedLessons / totalLessons) * 100) : 0}% course completed`,
+      icon: CheckCircle,
+      progress: totalLessons > 0 ? (totalCompletedLessons / totalLessons) * 100 : 0,
+    },
     {
       title: "Modules Started",
       value: modulesWithProgressCount,
