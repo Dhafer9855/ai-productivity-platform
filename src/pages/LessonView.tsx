@@ -84,26 +84,35 @@ const LessonView = () => {
   const { data: progress, refetch: refetchProgress } = useQuery({
     queryKey: ['lesson-progress', lessonId, user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id || !moduleLessons || !lesson) return null;
       
-      // Get the single module progress record and check if this lesson is completed
+      // Get the module progress record
       const { data, error } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
         .eq('module_id', parseInt(moduleId!))
+        .eq('completed', true)
+        .not('lesson_id', 'is', null)
         .maybeSingle();
 
       if (error) throw error;
       
-      // Check if this specific lesson is marked as the completed lesson
-      if (data && data.lesson_id === parseInt(lessonId!)) {
-        return { ...data, completed: data.completed };
+      // Check if this lesson is completed based on the same logic as CourseContent
+      if (data && data.lesson_id) {
+        const completedLesson = moduleLessons.find(l => l.id === data.lesson_id);
+        const currentLesson = moduleLessons.find(l => l.id === parseInt(lessonId!));
+        
+        if (completedLesson && currentLesson) {
+          // Lesson is completed if its order is <= the completed lesson's order
+          const isLessonCompleted = currentLesson.order <= completedLesson.order;
+          return { ...data, completed: isLessonCompleted };
+        }
       }
       
       return null;
     },
-    enabled: !!user?.id && !!lessonId,
+    enabled: !!user?.id && !!lessonId && !!moduleLessons && !!lesson,
   });
 
   // Reset local completion state when lesson changes
@@ -230,11 +239,12 @@ const LessonView = () => {
     );
   }
 
-  // Check if this specific lesson is completed
+  // Check if this specific lesson is completed using the same logic as CourseContent
   const isLessonCompleted = (progress?.completed === true) || isCompleted;
 
   console.log('Lesson completion check:', {
     lessonId,
+    lessonOrder: lesson?.order,
     progressCompleted: progress?.completed,
     isCompleted,
     isLessonCompleted,
