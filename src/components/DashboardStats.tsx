@@ -1,21 +1,18 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, BookOpen, Clock, Target } from "lucide-react";
+import { Trophy, BookOpen, Clock } from "lucide-react";
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useGrades } from "@/hooks/useGrades";
 import GradeDisplay from "./GradeDisplay";
 
 const DashboardStats = () => {
-  const { modules, lessons } = useCourseData();
+  const { modules } = useCourseData();
   const { progress } = useUserProgress();
   const { userProfile } = useGrades();
-
-  const totalLessons = lessons?.length || 0;
   
   console.log('=== DASHBOARD STATS DEBUG ===');
-  console.log('Total lessons in database:', totalLessons);
   console.log('Progress data from hook:', progress);
   console.log('Raw progress records:', progress?.map(p => ({ 
     id: p.id,
@@ -34,12 +31,6 @@ const DashboardStats = () => {
     });
   }
   const completedLessonsCount = completedLessonIds.size;
-  
-  console.log('=== LESSON COUNTING ===');
-  console.log('Unique completed lesson IDs:', Array.from(completedLessonIds));
-  console.log('Completed lessons count:', completedLessonsCount);
-  console.log('Total lessons:', totalLessons);
-  console.log('Progress percentage:', totalLessons > 0 ? (completedLessonsCount / totalLessons) * 100 : 0);
 
   // Count modules with progress (not necessarily completed)
   const modulesWithProgress = new Set();
@@ -57,16 +48,7 @@ const DashboardStats = () => {
   console.log('Modules with progress count:', modulesWithProgressCount);
   console.log('Total modules:', modules?.length || 0);
 
-  const overallProgress = totalLessons > 0 ? (completedLessonsCount / totalLessons) * 100 : 0;
-
   const stats = [
-    {
-      title: "Overall Progress",
-      value: `${Math.round(overallProgress)}%`,
-      description: `${completedLessonsCount} of ${totalLessons} lessons completed`,
-      icon: Target,
-      progress: overallProgress,
-    },
     {
       title: "Modules Started",
       value: modulesWithProgressCount,
