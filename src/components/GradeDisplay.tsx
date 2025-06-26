@@ -2,46 +2,24 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Award, Star, ExternalLink } from "lucide-react";
+import { Trophy, Award, Star, ExternalLink, CheckCircle } from "lucide-react";
 import { useGrades } from "@/hooks/useGrades";
 import { useUserProgress } from "@/hooks/useUserProgress";
+import { useTests } from "@/hooks/useTests";
+import { useCourseData } from "@/hooks/useCourseData";
 import { useState } from "react";
 import GradeDetailTable from "./GradeDetailTable";
 
 const GradeDisplay = () => {
   const { userProfile, currentGrade } = useGrades();
   const { progress } = useUserProgress();
+  const { attempts } = useTests();
+  const { modules } = useCourseData();
   const [showDetailTable, setShowDetailTable] = useState(false);
 
-  const getGradeColor = (grade: number) => {
-    if (grade >= 90) return "text-green-600";
-    if (grade >= 80) return "text-blue-600";
-    if (grade >= 70) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getGradeLetter = (grade: number) => {
-    if (grade >= 90) return "A";
-    if (grade >= 80) return "B";
-    if (grade >= 70) return "C";
-    if (grade >= 60) return "D";
-    return "F";
-  };
-
-  // Count modules with test scores from progress data
-  const modulesWithTestScores = new Set();
-  if (progress) {
-    progress.forEach(p => {
-      if (p.test_score !== null && p.test_score !== undefined && p.module_id) {
-        modulesWithTestScores.add(p.module_id);
-      }
-    });
-  }
-  const completedTestsCount = modulesWithTestScores.size;
-
-  // Use current grade if available, fallback to profile grade
-  const displayGrade = currentGrade?.grade || userProfile?.overall_grade;
-  const hasGrade = displayGrade !== null && displayGrade !== undefined;
+  // Count passed tests
+  const passedTestsCount = attempts?.filter(attempt => attempt.passed).length || 0;
+  const totalModulesCount = modules?.length || 7;
 
   return (
     <>
@@ -55,23 +33,17 @@ const GradeDisplay = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {hasGrade ? (
-              <div className="text-center">
-                <div className={`text-4xl font-bold ${getGradeColor(displayGrade)}`}>
-                  {displayGrade.toFixed(1)}%
-                </div>
-                <div className="text-lg text-gray-600">
-                  Grade: {getGradeLetter(displayGrade)}
-                </div>
-                <div className="text-sm text-gray-500 mt-2">
-                  Based on {completedTestsCount} completed test{completedTestsCount !== 1 ? 's' : ''}
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+                <div className="text-lg font-semibold text-gray-700">
+                  Passed {passedTestsCount} of {totalModulesCount}
                 </div>
               </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                Complete a module test to see your grade
+              <div className="text-sm text-gray-500">
+                Module tests completed successfully
               </div>
-            )}
+            </div>
 
             {userProfile?.certificate_earned && (
               <div className="flex items-center justify-center gap-2 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
