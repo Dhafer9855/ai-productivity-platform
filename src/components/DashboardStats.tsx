@@ -19,38 +19,46 @@ const DashboardStats = () => {
   console.log('Progress data from hook:', progress);
   console.log('Progress array length:', progress?.length);
   
-  // Count completed lessons - each progress record represents one completed lesson
-  const completedLessons = progress?.length || 0;
+  // Count completed lessons - count unique lesson_ids in progress
+  const completedLessonIds = new Set(progress?.map(p => p.lesson_id).filter(Boolean) || []);
+  const completedLessonsCount = completedLessonIds.size;
   
-  console.log('=== FINAL CALCULATION ===');
-  console.log('Completed lessons count:', completedLessons);
+  console.log('=== LESSON COUNTING ===');
+  console.log('Unique completed lesson IDs:', Array.from(completedLessonIds));
+  console.log('Completed lessons count:', completedLessonsCount);
   console.log('Total lessons:', totalLessons);
-  console.log('Progress percentage:', totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0);
+  console.log('Progress percentage:', totalLessons > 0 ? (completedLessonsCount / totalLessons) * 100 : 0);
 
   // Count completed modules (modules where all lessons are completed)
   const completedModules = modules?.filter(module => {
     const moduleLessons = lessons?.filter(lesson => lesson.module_id === module.id) || [];
+    if (moduleLessons.length === 0) return false;
+    
+    // Check if ALL lessons in this module are completed
     const moduleCompletedLessons = moduleLessons.filter(lesson => 
-      progress?.some(p => p.lesson_id === lesson.id)
+      completedLessonIds.has(lesson.id)
     );
-    const isModuleComplete = moduleLessons.length > 0 && moduleCompletedLessons.length === moduleLessons.length;
+    
+    const isModuleComplete = moduleCompletedLessons.length === moduleLessons.length;
     
     console.log(`Module ${module.id} completion check:`, {
-      moduleLessons: moduleLessons.length,
+      moduleTitle: module.title,
+      totalLessons: moduleLessons.length,
       completedLessons: moduleCompletedLessons.length,
-      isComplete: isModuleComplete
+      isComplete: isModuleComplete,
+      completedLessonIds: moduleCompletedLessons.map(l => l.id)
     });
     
     return isModuleComplete;
   }).length || 0;
 
-  const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+  const overallProgress = totalLessons > 0 ? (completedLessonsCount / totalLessons) * 100 : 0;
 
   const stats = [
     {
       title: "Overall Progress",
       value: `${Math.round(overallProgress)}%`,
-      description: `${completedLessons} of ${totalLessons} lessons completed`,
+      description: `${completedLessonsCount} of ${totalLessons} lessons completed`,
       icon: Target,
       progress: overallProgress,
     },
@@ -70,10 +78,10 @@ const DashboardStats = () => {
     },
     {
       title: "Time Invested",
-      value: `${completedLessons * 15}min`,
+      value: `${completedLessonsCount * 15}min`,
       description: "Estimated learning time",
       icon: Clock,
-      progress: Math.min((completedLessons * 15) / 300 * 100, 100),
+      progress: Math.min((completedLessonsCount * 15) / 300 * 100, 100),
     },
   ];
 
