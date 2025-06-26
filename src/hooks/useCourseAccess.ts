@@ -20,7 +20,7 @@ export const useCourseAccess = () => {
   });
 
   // Get test attempts and progress data to determine module access
-  const { data: testData } = useQuery({
+  const { data: testData, refetch: refetchTestData } = useQuery({
     queryKey: ['moduleTestAccess', user?.id],
     queryFn: async () => {
       if (!user) return { tests: [], attempts: [], progress: [] };
@@ -44,6 +44,8 @@ export const useCourseAccess = () => {
       };
     },
     enabled: !!user,
+    staleTime: 0, // Always refetch to get fresh data after resets
+    cacheTime: 0, // Don't cache to ensure we get updated data
   });
 
   const hasAccessToModule = (moduleId: number) => {
@@ -103,9 +105,15 @@ export const useCourseAccess = () => {
     return true;
   };
 
+  // Force refresh test data when needed
+  const refreshAccess = () => {
+    refetchTestData();
+  };
+
   return {
     courseAccess: courseAccess || [],
     isLoading: isLoading || !testData,
     hasAccessToModule,
+    refreshAccess,
   };
 };

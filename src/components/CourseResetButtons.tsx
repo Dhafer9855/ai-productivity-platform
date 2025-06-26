@@ -29,6 +29,7 @@ const CourseResetButtons = () => {
       queryClient.invalidateQueries({ queryKey: ['userProgress'] });
       queryClient.invalidateQueries({ queryKey: ['lesson-progress'] });
       queryClient.invalidateQueries({ queryKey: ['module-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['moduleTestAccess'] });
       toast({
         title: "Lessons Reset Successfully",
         description: "All lesson progress has been reset. Test scores remain intact.",
@@ -69,9 +70,10 @@ const CourseResetButtons = () => {
       queryClient.invalidateQueries({ queryKey: ['test_attempts'] });
       queryClient.invalidateQueries({ queryKey: ['userProgress'] });
       queryClient.invalidateQueries({ queryKey: ['current_grade'] });
+      queryClient.invalidateQueries({ queryKey: ['moduleTestAccess'] });
       toast({
         title: "Tests Reset Successfully",
-        description: "All test attempts and scores have been reset.",
+        description: "All test attempts and scores have been reset. Only Module 1 is now accessible.",
       });
     },
     onError: (error) => {
@@ -154,7 +156,7 @@ const CourseResetButtons = () => {
       queryClient.invalidateQueries();
       toast({
         title: "Complete Reset Successful",
-        description: "All course data has been reset. You can start fresh!",
+        description: "All course data has been reset. Only Module 1 is now accessible.",
       });
     },
     onError: (error) => {
@@ -209,7 +211,7 @@ const CourseResetButtons = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset Test Scores?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will delete all test attempts and scores. This will also affect your overall grade and module access.
+              This will delete all test attempts and scores. This will also affect your overall grade and module access. Only Module 1 will remain accessible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -266,7 +268,7 @@ const CourseResetButtons = () => {
             <AlertDialogTitle>Reset Entire Course?</AlertDialogTitle>
             <AlertDialogDescription>
               This will completely reset all progress, test scores, grades, and certificates. 
-              You'll start the course from the beginning. This action cannot be undone.
+              Only Module 1 will remain accessible. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
