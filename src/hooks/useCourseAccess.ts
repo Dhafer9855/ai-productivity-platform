@@ -48,35 +48,37 @@ export const useCourseAccess = () => {
     
     const { tests, attempts, progress } = testData;
     
-    // Check if the previous module's test is passed
-    const previousModuleId = moduleId - 1;
-    const previousModuleTest = tests.find(t => t.module_id === previousModuleId);
-    
-    if (!previousModuleTest) {
-      // If there's no test for the previous module, check if all lessons are completed
-      const moduleProgress = progress.find(p => p.module_id === previousModuleId && p.completed && p.lesson_id);
-      return !!moduleProgress;
+    // For modules 2 and above, check if ALL previous modules have passed tests
+    for (let i = 1; i < moduleId; i++) {
+      const moduleTest = tests.find(t => t.module_id === i);
+      
+      if (!moduleTest) {
+        console.log(`No test found for module ${i}, blocking access to module ${moduleId}`);
+        return false;
+      }
+      
+      // Check if there's a passing test attempt
+      const testAttempt = attempts.find(a => a.test_id === moduleTest.id && a.passed);
+      
+      // Also check progress record for test score
+      const moduleProgress = progress.find(p => p.module_id === i && p.test_score !== null && p.test_score >= 80);
+      
+      const hasPassedTest = testAttempt || moduleProgress;
+      
+      if (!hasPassedTest) {
+        console.log(`Module ${i} test not passed (required for module ${moduleId} access):`, {
+          moduleId: i,
+          hasTest: !!moduleTest,
+          testAttempt: !!testAttempt,
+          progressScore: moduleProgress?.test_score,
+          accessDenied: true
+        });
+        return false;
+      }
     }
     
-    // Check if there's a test attempt for the previous module that passed
-    const testAttempt = attempts.find(a => a.test_id === previousModuleTest.id);
-    const moduleProgress = progress.find(p => p.module_id === previousModuleId && p.test_score !== null);
-    
-    // Module is accessible ONLY if:
-    // 1. Test attempt exists and is marked as passed, OR
-    // 2. Progress record shows test score >= 80
-    const hasPassedTest = (testAttempt?.passed) || (moduleProgress?.test_score && moduleProgress.test_score >= 80);
-    
-    console.log(`Access check for module ${moduleId}:`, {
-      previousModuleId,
-      hasTest: !!previousModuleTest,
-      testAttempt: testAttempt?.passed,
-      progressScore: moduleProgress?.test_score,
-      hasPassedTest,
-      accessGranted: hasPassedTest
-    });
-    
-    return hasPassedTest;
+    console.log(`Access granted to module ${moduleId} - all previous tests passed`);
+    return true;
   };
 
   return {
