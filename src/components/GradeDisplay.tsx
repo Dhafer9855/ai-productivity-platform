@@ -17,43 +17,40 @@ const GradeDisplay = () => {
   const { modules } = useCourseData();
   const [showDetailTable, setShowDetailTable] = useState(false);
 
-  // Count passed tests by checking test attempts that are marked as passed
-  // and cross-reference with actual test scores >= 80
+  // Count passed tests - only count modules where tests are actually passed
   const passedTestsCount = (() => {
-    if (!attempts || !tests || !progress) return 0;
+    if (!progress || !tests || !attempts) return 0;
     
-    let count = 0;
-    const moduleTestMap = new Map();
+    const passedModules = new Set();
     
-    // Create a map of module_id to test attempts
-    if (tests) {
-      tests.forEach(test => {
-        const attempt = attempts.find(a => a.test_id === test.id);
-        if (attempt && attempt.passed) {
-          moduleTestMap.set(test.module_id, true);
+    // Check each module's test status using the same logic as the detail table
+    modules?.forEach(module => {
+      // Create a map of module progress data (same as in GradeDetailTable)
+      const moduleProgress = progress.find(p => p.module_id === module.id && p.test_score !== null);
+      
+      // Find test attempt for this module
+      const test = tests.find(t => t.module_id === module.id);
+      const testAttempt = test ? attempts.find(a => a.test_id === test.id) : null;
+      
+      // Check if test is passed (same logic as getStatusBadge in GradeDetailTable)
+      if (moduleProgress?.test_score !== null && moduleProgress?.test_score !== undefined) {
+        const passed = testAttempt?.passed || moduleProgress.test_score >= 80;
+        if (passed) {
+          passedModules.add(module.id);
         }
-      });
-    }
+      }
+    });
     
-    // Also check progress data for test scores >= 80
-    if (progress) {
-      progress.forEach(p => {
-        if (p.module_id && p.test_score !== null && p.test_score >= 80) {
-          moduleTestMap.set(p.module_id, true);
-        }
-      });
-    }
-    
-    return moduleTestMap.size;
+    return passedModules.size;
   })();
   
   const totalModulesCount = modules?.length || 7;
 
   console.log('=== GRADE DISPLAY DEBUG ===');
-  console.log('Attempts:', attempts);
-  console.log('Tests:', tests);
+  console.log('Modules:', modules);
   console.log('Progress with test scores:', progress?.filter(p => p.test_score !== null));
-  console.log('Calculated passed tests:', passedTestsCount);
+  console.log('Test attempts:', attempts);
+  console.log('Calculated passed tests (final):', passedTestsCount);
 
   return (
     <>
