@@ -13,13 +13,47 @@ import GradeDetailTable from "./GradeDetailTable";
 const GradeDisplay = () => {
   const { userProfile, currentGrade } = useGrades();
   const { progress } = useUserProgress();
-  const { attempts } = useTests();
+  const { attempts, tests } = useTests();
   const { modules } = useCourseData();
   const [showDetailTable, setShowDetailTable] = useState(false);
 
-  // Count passed tests
-  const passedTestsCount = attempts?.filter(attempt => attempt.passed).length || 0;
+  // Count passed tests by checking test attempts that are marked as passed
+  // and cross-reference with actual test scores >= 80
+  const passedTestsCount = (() => {
+    if (!attempts || !tests || !progress) return 0;
+    
+    let count = 0;
+    const moduleTestMap = new Map();
+    
+    // Create a map of module_id to test attempts
+    if (tests) {
+      tests.forEach(test => {
+        const attempt = attempts.find(a => a.test_id === test.id);
+        if (attempt && attempt.passed) {
+          moduleTestMap.set(test.module_id, true);
+        }
+      });
+    }
+    
+    // Also check progress data for test scores >= 80
+    if (progress) {
+      progress.forEach(p => {
+        if (p.module_id && p.test_score !== null && p.test_score >= 80) {
+          moduleTestMap.set(p.module_id, true);
+        }
+      });
+    }
+    
+    return moduleTestMap.size;
+  })();
+  
   const totalModulesCount = modules?.length || 7;
+
+  console.log('=== GRADE DISPLAY DEBUG ===');
+  console.log('Attempts:', attempts);
+  console.log('Tests:', tests);
+  console.log('Progress with test scores:', progress?.filter(p => p.test_score !== null));
+  console.log('Calculated passed tests:', passedTestsCount);
 
   return (
     <>
