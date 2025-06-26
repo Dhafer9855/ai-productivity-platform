@@ -6,7 +6,6 @@ import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useGrades } from "@/hooks/useGrades";
 import GradeDisplay from "./GradeDisplay";
-import ProgressMigrationButton from "./ProgressMigrationButton";
 
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
@@ -20,7 +19,7 @@ const DashboardStats = () => {
   console.log('Progress data from hook:', progress);
   console.log('Progress array length:', progress?.length);
   
-  // Count completed lessons - each progress record now represents one completed lesson
+  // Count completed lessons - each progress record represents one completed lesson
   const completedLessons = progress?.length || 0;
   
   console.log('=== FINAL CALCULATION ===');
@@ -97,10 +96,7 @@ const DashboardStats = () => {
         );
       })}
       
-      <div className="flex flex-col gap-4">
-        <GradeDisplay />
-        <ProgressMigrationButton />
-      </div>
+      <GradeDisplay />
     </div>
   );
 };

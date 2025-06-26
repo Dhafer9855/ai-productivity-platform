@@ -32,14 +32,10 @@ export const useUserProgress = () => {
       console.log('Raw progress data from DB:', data);
       console.log('Number of completed lesson records:', data?.length);
       
-      // Group by lesson_id to avoid duplicates
-      const uniqueLessons = data?.reduce((acc, current) => {
-        const existingLesson = acc.find(item => item.lesson_id === current.lesson_id);
-        if (!existingLesson) {
-          acc.push(current);
-        }
-        return acc;
-      }, [] as typeof data) || [];
+      // Return all unique lesson progress records
+      const uniqueLessons = data?.filter((item, index, self) => 
+        index === self.findIndex(t => t.lesson_id === item.lesson_id)
+      ) || [];
       
       console.log('Unique lesson progress records:', uniqueLessons);
       console.log('Final count of unique lessons:', uniqueLessons.length);
