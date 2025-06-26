@@ -31,6 +31,12 @@ export const useCourseAccess = () => {
         supabase.from('user_progress').select('*').eq('user_id', user.id)
       ]);
 
+      console.log('Test data loaded:', {
+        tests: testsResult.data?.length || 0,
+        attempts: attemptsResult.data?.length || 0,
+        progress: progressResult.data?.length || 0
+      });
+
       return {
         tests: testsResult.data || [],
         attempts: attemptsResult.data || [],
@@ -41,12 +47,26 @@ export const useCourseAccess = () => {
   });
 
   const hasAccessToModule = (moduleId: number) => {
-    // Always allow access to module 1
-    if (moduleId === 1) return true;
+    console.log(`=== ACCESS CHECK FOR MODULE ${moduleId} ===`);
     
-    if (!testData) return false;
+    // Always allow access to module 1
+    if (moduleId === 1) {
+      console.log('Module 1: Access granted (always accessible)');
+      return true;
+    }
+    
+    if (!testData) {
+      console.log('No test data available, denying access');
+      return false;
+    }
     
     const { tests, attempts, progress } = testData;
+    
+    console.log('Available data:', {
+      totalTests: tests.length,
+      totalAttempts: attempts.length,
+      totalProgress: progress.length
+    });
     
     // For modules 2 and above, check if ALL previous modules have passed tests
     for (let i = 1; i < moduleId; i++) {
@@ -65,19 +85,21 @@ export const useCourseAccess = () => {
       
       const hasPassedTest = testAttempt || moduleProgress;
       
+      console.log(`Module ${i} test check:`, {
+        testId: moduleTest.id,
+        hasAttempt: !!testAttempt,
+        attemptPassed: testAttempt?.passed,
+        progressScore: moduleProgress?.test_score,
+        hasPassedTest
+      });
+      
       if (!hasPassedTest) {
-        console.log(`Module ${i} test not passed (required for module ${moduleId} access):`, {
-          moduleId: i,
-          hasTest: !!moduleTest,
-          testAttempt: !!testAttempt,
-          progressScore: moduleProgress?.test_score,
-          accessDenied: true
-        });
+        console.log(`❌ Module ${i} test not passed (required for module ${moduleId} access)`);
         return false;
       }
     }
     
-    console.log(`Access granted to module ${moduleId} - all previous tests passed`);
+    console.log(`✅ Access granted to module ${moduleId} - all previous tests passed`);
     return true;
   };
 

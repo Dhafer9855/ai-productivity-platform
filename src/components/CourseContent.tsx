@@ -1,3 +1,4 @@
+
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useAssignments } from "@/hooks/useAssignments";
@@ -55,6 +56,7 @@ const CourseContent = () => {
 
     // Check if user has access to this module (based on test completion now)
     const hasAccess = hasAccessToModule(module.id);
+    console.log(`Module ${module.id} access check result:`, hasAccess);
 
     // For module 7, show assignment instead of lessons
     if (module.id === 7) {
