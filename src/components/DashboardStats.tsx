@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, BookOpen, Clock } from "lucide-react";
@@ -10,11 +9,12 @@ import GradeDisplay from "./GradeDisplay";
 const DashboardStats = () => {
   const { modules, lessons } = useCourseData();
   const { progress } = useUserProgress();
-  const { userProfile } = useGrades();
+  const { userProfile, currentGrade } = useGrades();
   
   console.log('=== DASHBOARD STATS DEBUG ===');
   console.log('Progress data from hook:', progress);
   console.log('All lessons:', lessons);
+  console.log('Current grade from hook:', currentGrade);
   console.log('Raw progress records:', progress?.map(p => ({ 
     id: p.id,
     lesson_id: p.lesson_id, 
@@ -61,6 +61,13 @@ const DashboardStats = () => {
   console.log('Modules with progress count:', modulesWithProgressCount);
   console.log('Total modules:', modules?.length || 0);
 
+  // Use currentGrade from the hook, but show N/A if no tests completed
+  const displayGrade = currentGrade?.completedModules > 0 ? `${currentGrade.grade.toFixed(1)}%` : "N/A";
+  const gradeDescription = currentGrade?.completedModules > 0 
+    ? (userProfile?.certificate_earned ? "Certificate Earned!" : "Keep learning!")
+    : "Complete a test to see your grade";
+  const gradeProgress = currentGrade?.completedModules > 0 ? currentGrade.grade : 0;
+
   const stats = [
     {
       title: "Modules Started",
@@ -71,10 +78,10 @@ const DashboardStats = () => {
     },
     {
       title: "Current Grade",
-      value: userProfile?.overall_grade ? `${userProfile.overall_grade.toFixed(1)}%` : "N/A",
-      description: userProfile?.certificate_earned ? "Certificate Earned!" : "Keep learning!",
+      value: displayGrade,
+      description: gradeDescription,
       icon: Trophy,
-      progress: userProfile?.overall_grade || 0,
+      progress: gradeProgress,
     },
     {
       title: "Time Invested",

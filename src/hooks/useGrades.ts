@@ -37,7 +37,8 @@ export const useGrades = () => {
         .from('user_progress')
         .select('module_id, test_score')
         .eq('user_id', user.id)
-        .not('test_score', 'is', null); // Only include modules with test scores
+        .not('test_score', 'is', null)
+        .gte('test_score', 0); // Only include actual test scores (>= 0)
 
       if (error) {
         console.error('Error fetching progress:', error);
@@ -46,15 +47,15 @@ export const useGrades = () => {
 
       if (!progress || progress.length === 0) {
         console.log('No test scores found');
-        return null;
+        return { grade: 0, completedModules: 0 }; // Return 0 instead of null
       }
 
-      // Calculate average test scores
+      // Calculate average test scores - only valid scores
       const testScores = progress
-        .filter(p => p.test_score !== null)
+        .filter(p => p.test_score !== null && p.test_score >= 0)
         .map(p => p.test_score);
 
-      if (testScores.length === 0) return null;
+      if (testScores.length === 0) return { grade: 0, completedModules: 0 };
 
       const overallGrade = testScores.reduce((sum, score) => sum + score, 0) / testScores.length;
       
@@ -75,7 +76,8 @@ export const useGrades = () => {
         .from('user_progress')
         .select('module_id, test_score, assignment_score')
         .eq('user_id', user.id)
-        .not('test_score', 'is', null); // Only include modules with test scores
+        .not('test_score', 'is', null)
+        .gte('test_score', 0); // Only include actual test scores
 
       if (error) {
         console.error('Error fetching progress:', error);
@@ -89,7 +91,7 @@ export const useGrades = () => {
 
       // Calculate average test scores
       const testScores = progress
-        .filter(p => p.test_score !== null)
+        .filter(p => p.test_score !== null && p.test_score >= 0)
         .map(p => p.test_score);
 
       if (testScores.length === 0) return null;
@@ -136,7 +138,7 @@ export const useGrades = () => {
 
   // Auto-calculate grade when test scores change
   useEffect(() => {
-    if (currentGrade?.grade && user) {
+    if (currentGrade?.grade && currentGrade?.completedModules > 0 && user) {
       calculateOverallGradeMutation.mutate();
     }
   }, [currentGrade?.completedModules, user?.id]);

@@ -1,4 +1,3 @@
-
 import { useCourseData } from "@/hooks/useCourseData";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useAssignments } from "@/hooks/useAssignments";
@@ -7,7 +6,7 @@ import { useCourseAccess } from "@/hooks/useCourseAccess";
 import ModuleCard from "./ModuleCard";
 import AssignmentCard from "./AssignmentCard";
 import TestCard from "./TestCard";
-import CourseResetButton from "./CourseResetButton";
+import CourseResetButtons from "./CourseResetButtons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CourseContent = () => {
@@ -94,9 +93,9 @@ const CourseContent = () => {
 
   return (
     <div className="space-y-6">
-      {/* Course Reset Button */}
+      {/* Course Reset Buttons */}
       <div className="flex justify-end">
-        <CourseResetButton />
+        <CourseResetButtons />
       </div>
 
       <Tabs defaultValue="modules" className="w-full">

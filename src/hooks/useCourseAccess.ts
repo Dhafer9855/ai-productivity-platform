@@ -53,15 +53,16 @@ export const useCourseAccess = () => {
     const previousModuleTest = tests.find(t => t.module_id === previousModuleId);
     
     if (!previousModuleTest) {
-      // If there's no test for the previous module, allow access
-      return true;
+      // If there's no test for the previous module, check if all lessons are completed
+      const moduleProgress = progress.find(p => p.module_id === previousModuleId && p.completed && p.lesson_id);
+      return !!moduleProgress;
     }
     
     // Check if there's a test attempt for the previous module that passed
     const testAttempt = attempts.find(a => a.test_id === previousModuleTest.id);
     const moduleProgress = progress.find(p => p.module_id === previousModuleId && p.test_score !== null);
     
-    // Module is accessible if:
+    // Module is accessible ONLY if:
     // 1. Test attempt exists and is marked as passed, OR
     // 2. Progress record shows test score >= 80
     const hasPassedTest = (testAttempt?.passed) || (moduleProgress?.test_score && moduleProgress.test_score >= 80);
@@ -71,7 +72,8 @@ export const useCourseAccess = () => {
       hasTest: !!previousModuleTest,
       testAttempt: testAttempt?.passed,
       progressScore: moduleProgress?.test_score,
-      hasPassedTest
+      hasPassedTest,
+      accessGranted: hasPassedTest
     });
     
     return hasPassedTest;
