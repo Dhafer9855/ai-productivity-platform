@@ -45,9 +45,16 @@ const CourseResetButtons = () => {
       if (profileError) throw profileError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      // Invalidate all relevant queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+      queryClient.invalidateQueries({ queryKey: ['moduleTestAccess'] });
+      queryClient.invalidateQueries({ queryKey: ['courseAccess'] });
+      queryClient.invalidateQueries({ queryKey: ['current_grade'] });
+      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['test_attempts'] });
+      
       toast({
-        title: "Complete Reset Successful",
+        title: "Reset Progress Successful",
         description: "All course data has been reset. Only Module 1 is now accessible.",
       });
     },

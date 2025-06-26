@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,38 +70,44 @@ export const useCourseAccess = () => {
       totalProgress: progress.length
     });
     
-    // For modules 2 and above, check if ALL previous modules have passed tests
-    for (let i = 1; i < moduleId; i++) {
-      const moduleTest = tests.find(t => t.module_id === i);
-      
-      if (!moduleTest) {
-        console.log(`No test found for module ${i}, blocking access to module ${moduleId}`);
-        return false;
-      }
-      
-      // Check if there's a passing test attempt
-      const testAttempt = attempts.find(a => a.test_id === moduleTest.id && a.passed);
-      
-      // Also check progress record for test score
-      const moduleProgress = progress.find(p => p.module_id === i && p.test_score !== null && p.test_score >= 80);
-      
-      const hasPassedTest = testAttempt || moduleProgress;
-      
-      console.log(`Module ${i} test check:`, {
-        testId: moduleTest.id,
-        hasAttempt: !!testAttempt,
-        attemptPassed: testAttempt?.passed,
-        progressScore: moduleProgress?.test_score,
-        hasPassedTest
-      });
-      
-      if (!hasPassedTest) {
-        console.log(`❌ Module ${i} test not passed (required for module ${moduleId} access)`);
-        return false;
-      }
+    // For modules 2 and above, check if the PREVIOUS module has:
+    // 1. A passing test attempt (score >= 80)
+    // 2. All lessons completed in that module
+    const previousModuleId = moduleId - 1;
+    
+    // Check if previous module test was passed
+    const previousModuleTest = tests.find(t => t.module_id === previousModuleId);
+    
+    if (!previousModuleTest) {
+      console.log(`No test found for previous module ${previousModuleId}, blocking access to module ${moduleId}`);
+      return false;
     }
     
-    console.log(`✅ Access granted to module ${moduleId} - all previous tests passed`);
+    // Check if there's a passing test attempt for the previous module
+    const passingTestAttempt = attempts.find(a => 
+      a.test_id === previousModuleTest.id && 
+      a.passed === true && 
+      a.score >= 80
+    );
+    
+    if (!passingTestAttempt) {
+      console.log(`❌ Previous module ${previousModuleId} test not passed (required for module ${moduleId} access)`);
+      return false;
+    }
+    
+    // Check if previous module lessons are completed
+    const previousModuleProgress = progress.find(p => 
+      p.module_id === previousModuleId && 
+      p.completed === true && 
+      p.lesson_id !== null
+    );
+    
+    if (!previousModuleProgress) {
+      console.log(`❌ Previous module ${previousModuleId} not completed (required for module ${moduleId} access)`);
+      return false;
+    }
+    
+    console.log(`✅ Access granted to module ${moduleId} - previous module ${previousModuleId} test passed and completed`);
     return true;
   };
 
