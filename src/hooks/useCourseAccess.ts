@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +44,7 @@ export const useCourseAccess = () => {
     },
     enabled: !!user,
     staleTime: 0, // Always refetch to get fresh data after resets
-    cacheTime: 0, // Don't cache to ensure we get updated data
+    gcTime: 0, // Don't cache to ensure we get updated data
   });
 
   const hasAccessToModule = (moduleId: number) => {
