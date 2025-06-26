@@ -8,12 +8,13 @@ import { useGrades } from "@/hooks/useGrades";
 import GradeDisplay from "./GradeDisplay";
 
 const DashboardStats = () => {
-  const { modules } = useCourseData();
+  const { modules, lessons } = useCourseData();
   const { progress } = useUserProgress();
   const { userProfile } = useGrades();
   
   console.log('=== DASHBOARD STATS DEBUG ===');
   console.log('Progress data from hook:', progress);
+  console.log('All lessons:', lessons);
   console.log('Raw progress records:', progress?.map(p => ({ 
     id: p.id,
     lesson_id: p.lesson_id, 
@@ -21,16 +22,27 @@ const DashboardStats = () => {
     completed: p.completed 
   })));
   
-  // Count completed lessons - get unique lesson IDs from progress records
-  const completedLessonIds = new Set();
-  if (progress) {
-    progress.forEach(p => {
-      if (p.lesson_id && p.completed) {
-        completedLessonIds.add(p.lesson_id);
+  // Calculate total completed lessons by going through each module and applying the completion logic
+  let totalCompletedLessons = 0;
+  
+  if (progress && lessons && modules) {
+    modules.forEach(module => {
+      const moduleLessons = lessons.filter(lesson => lesson.module_id === module.id);
+      const moduleProgressRecord = progress.find(p => p.module_id === module.id && p.completed && p.lesson_id);
+      
+      if (moduleProgressRecord && moduleProgressRecord.lesson_id) {
+        // Find the completed lesson order
+        const completedLesson = moduleLessons.find(l => l.id === moduleProgressRecord.lesson_id);
+        if (completedLesson) {
+          // Count all lessons up to and including the completed lesson
+          const completedLessonsInModule = moduleLessons.filter(l => l.order <= completedLesson.order).length;
+          totalCompletedLessons += completedLessonsInModule;
+          
+          console.log(`Module ${module.id}: ${completedLessonsInModule} lessons completed (up to lesson ${completedLesson.order})`);
+        }
       }
     });
   }
-  const completedLessonsCount = completedLessonIds.size;
 
   // Count modules with any completed lessons
   const modulesWithProgress = new Set();
@@ -44,8 +56,7 @@ const DashboardStats = () => {
   const modulesWithProgressCount = modulesWithProgress.size;
 
   console.log('=== LESSON & MODULE COUNTING ===');
-  console.log('Unique completed lesson IDs:', Array.from(completedLessonIds));
-  console.log('Completed lessons count:', completedLessonsCount);
+  console.log('Total completed lessons (with progression logic):', totalCompletedLessons);
   console.log('Modules with completed lessons:', Array.from(modulesWithProgress));
   console.log('Modules with progress count:', modulesWithProgressCount);
   console.log('Total modules:', modules?.length || 0);
@@ -67,10 +78,10 @@ const DashboardStats = () => {
     },
     {
       title: "Time Invested",
-      value: `${completedLessonsCount * 15}min`,
-      description: `${completedLessonsCount} lessons completed`,
+      value: `${totalCompletedLessons * 15}min`,
+      description: `${totalCompletedLessons} lessons completed`,
       icon: Clock,
-      progress: Math.min((completedLessonsCount * 15) / 300 * 100, 100),
+      progress: Math.min((totalCompletedLessons * 15) / 300 * 100, 100),
     },
   ];
 
